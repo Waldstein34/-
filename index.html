@@ -1,0 +1,774 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>大学課題アラート</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f7f4;
+      --ink: #1e2428;
+      --muted: #647078;
+      --line: #d8dedb;
+      --panel: #ffffff;
+      --focus: #0f7b74;
+      --focus-soft: #d9f0ed;
+      --warn: #b36a00;
+      --warn-soft: #fff1d7;
+      --danger: #b3261e;
+      --danger-soft: #ffe0dc;
+      --done: #5b676e;
+      --shadow: 0 14px 40px rgba(21, 37, 44, .11);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(135deg, rgba(15, 123, 116, .09), transparent 36%),
+        linear-gradient(315deg, rgba(179, 106, 0, .08), transparent 34%),
+        var(--bg);
+      color: var(--ink);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    .app {
+      width: min(960px, 100%);
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.35rem, 2.5vw, 2.1rem);
+      line-height: 1.1;
+    }
+
+    .sub {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: .95rem;
+    }
+
+    .today {
+      display: grid;
+      place-items: center;
+      min-width: 86px;
+      min-height: 72px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .78);
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+
+    .today b {
+      display: block;
+      font-size: 1.45rem;
+    }
+
+    .toolbar,
+    .form,
+    .summary {
+      background: rgba(255, 255, 255, .88);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      padding: 10px;
+      margin-bottom: 12px;
+    }
+
+    .segmented {
+      display: inline-grid;
+      grid-template-columns: repeat(3, minmax(72px, 1fr));
+      gap: 2px;
+      padding: 3px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #eef2f0;
+    }
+
+    .segmented button,
+    .icon-button,
+    .primary,
+    .ghost {
+      min-height: 38px;
+      border: 0;
+      border-radius: 7px;
+      cursor: pointer;
+      color: var(--ink);
+    }
+
+    .segmented button {
+      padding: 0 12px;
+      background: transparent;
+      color: var(--muted);
+    }
+
+    .segmented button.active {
+      background: var(--panel);
+      color: var(--ink);
+      box-shadow: 0 1px 8px rgba(27, 40, 45, .12);
+    }
+
+    .icon-button,
+    .ghost {
+      display: inline-grid;
+      place-items: center;
+      width: 42px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+    }
+
+    .primary {
+      padding: 0 14px;
+      background: var(--focus);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .ghost {
+      width: auto;
+      padding: 0 12px;
+    }
+
+    .toolbar-spacer {
+      flex: 1 1 auto;
+    }
+
+    .form {
+      display: grid;
+      grid-template-columns: minmax(170px, 1.2fr) minmax(110px, .8fr) minmax(132px, .8fr) minmax(96px, .6fr) auto;
+      gap: 9px;
+      align-items: end;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    label {
+      display: grid;
+      gap: 5px;
+      color: var(--muted);
+      font-size: .78rem;
+      font-weight: 700;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--panel);
+      color: var(--ink);
+      padding: 0 10px;
+    }
+
+    input:focus,
+    select:focus,
+    button:focus-visible {
+      outline: 3px solid rgba(15, 123, 116, .25);
+      outline-offset: 2px;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .metric {
+      padding: 12px;
+      background: rgba(255, 255, 255, .78);
+      min-width: 0;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: .74rem;
+      font-weight: 700;
+    }
+
+    .metric b {
+      display: block;
+      margin-top: 3px;
+      font-size: 1.55rem;
+      line-height: 1;
+    }
+
+    .list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .assignment {
+      display: grid;
+      grid-template-columns: auto 1fr auto auto;
+      gap: 10px;
+      align-items: center;
+      min-height: 74px;
+      padding: 11px;
+      border: 1px solid var(--line);
+      border-left: 6px solid var(--focus);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .92);
+      box-shadow: 0 8px 22px rgba(21, 37, 44, .08);
+    }
+
+    .assignment.warn {
+      border-left-color: var(--warn);
+      background: var(--warn-soft);
+    }
+
+    .assignment.danger,
+    .assignment.overdue {
+      border-left-color: var(--danger);
+      background: var(--danger-soft);
+    }
+
+    .assignment.done {
+      opacity: .66;
+      border-left-color: var(--done);
+    }
+
+    .check {
+      width: 24px;
+      height: 24px;
+      accent-color: var(--focus);
+    }
+
+    .main {
+      min-width: 0;
+    }
+
+    .title-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: baseline;
+    }
+
+    .name {
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .course {
+      color: var(--muted);
+      font-size: .88rem;
+      overflow-wrap: anywhere;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: .83rem;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 0 8px;
+      border: 1px solid rgba(0, 0, 0, .08);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .62);
+      white-space: nowrap;
+    }
+
+    .due {
+      min-width: 86px;
+      text-align: right;
+      font-weight: 800;
+    }
+
+    .delete {
+      width: 34px;
+      height: 34px;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+
+    .delete:hover {
+      background: rgba(179, 38, 30, .1);
+      color: var(--danger);
+    }
+
+    .empty {
+      padding: 26px 16px;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .58);
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .notice {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: .78rem;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 760px) {
+      .app {
+        padding: 12px;
+      }
+
+      header {
+        grid-template-columns: 1fr;
+      }
+
+      .today {
+        justify-self: start;
+        min-height: 58px;
+        grid-auto-flow: column;
+        gap: 8px;
+      }
+
+      .form {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .form .primary {
+        grid-column: 1 / -1;
+      }
+
+      .summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 480px) {
+      .toolbar {
+        align-items: stretch;
+      }
+
+      .segmented {
+        width: 100%;
+      }
+
+      .toolbar-spacer {
+        display: none;
+      }
+
+      .form,
+      .summary {
+        grid-template-columns: 1fr;
+      }
+
+      .assignment {
+        grid-template-columns: auto 1fr auto;
+      }
+
+      .due {
+        grid-column: 2 / 4;
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <h1>大学課題アラート</h1>
+        <p class="sub">締切が近い課題を上に集めて、Notion の中で見逃しを減らします。</p>
+      </div>
+      <div class="today" aria-label="今日">
+        <span id="monthLabel"></span>
+        <b id="dayLabel"></b>
+      </div>
+    </header>
+
+    <section class="toolbar" aria-label="表示設定">
+      <div class="segmented" role="group" aria-label="表示フィルター">
+        <button type="button" class="active" data-filter="active">未完了</button>
+        <button type="button" data-filter="all">すべて</button>
+        <button type="button" data-filter="done">完了</button>
+      </div>
+      <div class="toolbar-spacer"></div>
+      <button type="button" class="ghost" id="notifyButton">通知を許可</button>
+      <button type="button" class="icon-button" id="exportButton" title="JSONを書き出す" aria-label="JSONを書き出す">↓</button>
+      <label class="icon-button" title="JSONを読み込む" aria-label="JSONを読み込む">
+        ↑
+        <input id="importInput" type="file" accept="application/json" hidden>
+      </label>
+    </section>
+
+    <form class="form" id="assignmentForm">
+      <label>
+        課題名
+        <input id="titleInput" required maxlength="80" placeholder="例: 統計学レポート">
+      </label>
+      <label>
+        授業
+        <input id="courseInput" maxlength="60" placeholder="例: 統計学 I">
+      </label>
+      <label>
+        締切
+        <input id="dueInput" type="datetime-local" required>
+      </label>
+      <label>
+        優先度
+        <select id="priorityInput">
+          <option value="高">高</option>
+          <option value="中" selected>中</option>
+          <option value="低">低</option>
+        </select>
+      </label>
+      <button class="primary" type="submit">追加</button>
+    </form>
+
+    <section class="summary" aria-label="課題サマリー">
+      <div class="metric"><span>今日まで</span><b id="dueTodayCount">0</b></div>
+      <div class="metric"><span>3日以内</span><b id="soonCount">0</b></div>
+      <div class="metric"><span>未完了</span><b id="activeCount">0</b></div>
+      <div class="metric"><span>完了</span><b id="doneCount">0</b></div>
+    </section>
+
+    <section class="list" id="assignmentList" aria-live="polite"></section>
+    <p class="notice">通知はこのページを開いている間に動きます。Notion に埋め込む場合は、GitHub Pages や Netlify などにこの HTML を置いた URL を /embed してください。</p>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "university-assignment-alerts-v1";
+    const ALERT_WINDOW_HOURS = 24;
+    const now = () => new Date();
+
+    const state = {
+      filter: "active",
+      assignments: loadAssignments()
+    };
+
+    const elements = {
+      monthLabel: document.querySelector("#monthLabel"),
+      dayLabel: document.querySelector("#dayLabel"),
+      form: document.querySelector("#assignmentForm"),
+      title: document.querySelector("#titleInput"),
+      course: document.querySelector("#courseInput"),
+      due: document.querySelector("#dueInput"),
+      priority: document.querySelector("#priorityInput"),
+      list: document.querySelector("#assignmentList"),
+      dueTodayCount: document.querySelector("#dueTodayCount"),
+      soonCount: document.querySelector("#soonCount"),
+      activeCount: document.querySelector("#activeCount"),
+      doneCount: document.querySelector("#doneCount"),
+      notify: document.querySelector("#notifyButton"),
+      exportButton: document.querySelector("#exportButton"),
+      importInput: document.querySelector("#importInput")
+    };
+
+    function loadAssignments() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch {
+          localStorage.removeItem(STORAGE_KEY);
+        }
+      }
+
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(23, 59, 0, 0);
+      const nextWeek = new Date();
+      nextWeek.setDate(nextWeek.getDate() + 7);
+      nextWeek.setHours(18, 0, 0, 0);
+
+      return [
+        {
+          id: crypto.randomUUID(),
+          title: "英語プレゼン準備",
+          course: "Academic English",
+          due: toInputDate(tomorrow),
+          priority: "高",
+          done: false,
+          notified: false
+        },
+        {
+          id: crypto.randomUUID(),
+          title: "ゼミ文献メモ",
+          course: "専門演習",
+          due: toInputDate(nextWeek),
+          priority: "中",
+          done: false,
+          notified: false
+        }
+      ];
+    }
+
+    function saveAssignments() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.assignments));
+    }
+
+    function toInputDate(date) {
+      const pad = value => String(value).padStart(2, "0");
+      return [
+        date.getFullYear(),
+        pad(date.getMonth() + 1),
+        pad(date.getDate())
+      ].join("-") + "T" + [pad(date.getHours()), pad(date.getMinutes())].join(":");
+    }
+
+    function formatDue(value) {
+      return new Intl.DateTimeFormat("ja-JP", {
+        month: "numeric",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      }).format(new Date(value));
+    }
+
+    function getStatus(item) {
+      if (item.done) return "done";
+      const hours = (new Date(item.due) - now()) / 36e5;
+      if (hours < 0) return "overdue";
+      if (hours <= 24) return "danger";
+      if (hours <= 72) return "warn";
+      return "ok";
+    }
+
+    function getRemainingLabel(item) {
+      if (item.done) return "完了";
+      const diffMs = new Date(item.due) - now();
+      const absHours = Math.abs(diffMs) / 36e5;
+      if (diffMs < 0) {
+        if (absHours < 24) return `${Math.ceil(absHours)}時間超過`;
+        return `${Math.ceil(absHours / 24)}日超過`;
+      }
+      if (absHours < 1) return "1時間以内";
+      if (absHours < 24) return `あと${Math.ceil(absHours)}時間`;
+      return `あと${Math.ceil(absHours / 24)}日`;
+    }
+
+    function renderDate() {
+      const today = now();
+      elements.monthLabel.textContent = `${today.getMonth() + 1}月`;
+      elements.dayLabel.textContent = today.getDate();
+      if (!elements.due.value) {
+        const defaultDue = new Date();
+        defaultDue.setHours(23, 59, 0, 0);
+        elements.due.value = toInputDate(defaultDue);
+      }
+    }
+
+    function renderSummary() {
+      const active = state.assignments.filter(item => !item.done);
+      const done = state.assignments.filter(item => item.done);
+      const dueToday = active.filter(item => {
+        const due = new Date(item.due);
+        const end = now();
+        end.setHours(23, 59, 59, 999);
+        return due <= end;
+      });
+      const soon = active.filter(item => {
+        const hours = (new Date(item.due) - now()) / 36e5;
+        return hours >= 0 && hours <= 72;
+      });
+      elements.dueTodayCount.textContent = dueToday.length;
+      elements.soonCount.textContent = soon.length;
+      elements.activeCount.textContent = active.length;
+      elements.doneCount.textContent = done.length;
+    }
+
+    function renderList() {
+      const filtered = state.assignments
+        .filter(item => {
+          if (state.filter === "active") return !item.done;
+          if (state.filter === "done") return item.done;
+          return true;
+        })
+        .sort((a, b) => Number(a.done) - Number(b.done) || new Date(a.due) - new Date(b.due));
+
+      elements.list.innerHTML = "";
+      if (!filtered.length) {
+        elements.list.innerHTML = `<div class="empty">表示する課題はありません。</div>`;
+        return;
+      }
+
+      filtered.forEach(item => {
+        const article = document.createElement("article");
+        article.className = `assignment ${getStatus(item)}`;
+        article.innerHTML = `
+          <input class="check" type="checkbox" ${item.done ? "checked" : ""} aria-label="完了にする">
+          <div class="main">
+            <div class="title-line">
+              <span class="name"></span>
+              <span class="course"></span>
+            </div>
+            <div class="meta">
+              <span class="pill"></span>
+              <span class="pill"></span>
+              <span class="pill"></span>
+            </div>
+          </div>
+          <div class="due"></div>
+          <button class="delete" type="button" aria-label="削除">×</button>
+        `;
+
+        article.querySelector(".name").textContent = item.title;
+        article.querySelector(".course").textContent = item.course ? `/${item.course}` : "";
+        const pills = article.querySelectorAll(".pill");
+        pills[0].textContent = formatDue(item.due);
+        pills[1].textContent = `優先度 ${item.priority}`;
+        pills[2].textContent = getStatus(item) === "overdue" ? "期限超過" : "期限内";
+        article.querySelector(".due").textContent = getRemainingLabel(item);
+
+        article.querySelector(".check").addEventListener("change", event => {
+          item.done = event.target.checked;
+          item.notified = false;
+          saveAssignments();
+          render();
+        });
+
+        article.querySelector(".delete").addEventListener("click", () => {
+          state.assignments = state.assignments.filter(candidate => candidate.id !== item.id);
+          saveAssignments();
+          render();
+        });
+
+        elements.list.append(article);
+      });
+    }
+
+    function render() {
+      renderDate();
+      renderSummary();
+      renderList();
+      document.querySelectorAll("[data-filter]").forEach(button => {
+        button.classList.toggle("active", button.dataset.filter === state.filter);
+      });
+      elements.notify.textContent = Notification.permission === "granted" ? "通知オン" : "通知を許可";
+    }
+
+    function checkAlerts() {
+      if (Notification.permission !== "granted") return;
+      let changed = false;
+      state.assignments.forEach(item => {
+        if (item.done || item.notified) return;
+        const hours = (new Date(item.due) - now()) / 36e5;
+        if (hours >= 0 && hours <= ALERT_WINDOW_HOURS) {
+          new Notification("課題の締切が近いです", {
+            body: `${item.title}：${getRemainingLabel(item)} (${formatDue(item.due)})`
+          });
+          item.notified = true;
+          changed = true;
+        }
+      });
+      if (changed) saveAssignments();
+    }
+
+    elements.form.addEventListener("submit", event => {
+      event.preventDefault();
+      state.assignments.push({
+        id: crypto.randomUUID(),
+        title: elements.title.value.trim(),
+        course: elements.course.value.trim(),
+        due: elements.due.value,
+        priority: elements.priority.value,
+        done: false,
+        notified: false
+      });
+      saveAssignments();
+      elements.form.reset();
+      render();
+      elements.title.focus();
+    });
+
+    document.querySelectorAll("[data-filter]").forEach(button => {
+      button.addEventListener("click", () => {
+        state.filter = button.dataset.filter;
+        render();
+      });
+    });
+
+    elements.notify.addEventListener("click", async () => {
+      if (!("Notification" in window)) {
+        alert("このブラウザは通知に対応していません。");
+        return;
+      }
+      if (Notification.permission !== "granted") {
+        await Notification.requestPermission();
+      }
+      render();
+      checkAlerts();
+    });
+
+    elements.exportButton.addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(state.assignments, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "assignments.json";
+      link.click();
+      URL.revokeObjectURL(url);
+    });
+
+    elements.importInput.addEventListener("change", async event => {
+      const file = event.target.files[0];
+      if (!file) return;
+      const imported = JSON.parse(await file.text());
+      if (!Array.isArray(imported)) return;
+      state.assignments = imported.map(item => ({
+        id: item.id || crypto.randomUUID(),
+        title: String(item.title || "無題の課題"),
+        course: String(item.course || ""),
+        due: item.due,
+        priority: item.priority || "中",
+        done: Boolean(item.done),
+        notified: Boolean(item.notified)
+      })).filter(item => item.due);
+      saveAssignments();
+      render();
+      event.target.value = "";
+    });
+
+    render();
+    checkAlerts();
+    setInterval(() => {
+      render();
+      checkAlerts();
+    }, 60 * 1000);
+  </script>
+</body>
+</html>
