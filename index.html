@@ -1,1346 +1,1047 @@
 <!doctype html>
-<html lang="ja">
+<html lang="ja" data-theme="light">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>大学課題アラート</title>
-  <style>
-    :root {
-      color-scheme: light;
-      --bg: #f7f7f4;
-      --ink: #1e2428;
-      --muted: #647078;
-      --line: #d8dedb;
-      --panel: #ffffff;
-      --focus: #0f7b74;
-      --warn: #b36a00;
-      --warn-soft: #fff1d7;
-      --danger: #b3261e;
-      --danger-soft: #ffe0dc;
-      --done: #5b676e;
-      --shadow: 0 14px 40px rgba(21, 37, 44, .11);
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background:
-        linear-gradient(135deg, rgba(15, 123, 116, .09), transparent 36%),
-        linear-gradient(315deg, rgba(179, 106, 0, .08), transparent 34%),
-        var(--bg);
-      color: var(--ink);
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      letter-spacing: 0;
-    }
-
-    button,
-    input,
-    select {
-      font: inherit;
-    }
-
-    .app {
-      width: min(980px, 100%);
-      margin: 0 auto;
-      padding: 18px;
-    }
-
-    header {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 14px;
-      align-items: center;
-      margin-bottom: 14px;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: clamp(1.35rem, 2.5vw, 2.1rem);
-      line-height: 1.1;
-    }
-
-    .sub {
-      margin: 6px 0 0;
-      color: var(--muted);
-      font-size: .95rem;
-    }
-
-    .today {
-      display: grid;
-      place-items: center;
-      min-width: 86px;
-      min-height: 72px;
-      padding: 10px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: rgba(255, 255, 255, .78);
-      box-shadow: var(--shadow);
-      text-align: center;
-    }
-
-    .today b {
-      display: block;
-      font-size: 1.45rem;
-    }
-
-    .toolbar,
-    .form,
-    .summary {
-      background: rgba(255, 255, 255, .88);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      box-shadow: var(--shadow);
-    }
-
-    .toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      align-items: center;
-      padding: 10px;
-      margin-bottom: 12px;
-    }
-
-    .segmented {
-      display: inline-grid;
-      grid-template-columns: repeat(3, minmax(72px, 1fr));
-      gap: 2px;
-      padding: 3px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #eef2f0;
-    }
-
-    .segmented button,
-    .icon-button,
-    .primary,
-    .ghost {
-      min-height: 38px;
-      border: 0;
-      border-radius: 7px;
-      cursor: pointer;
-      color: var(--ink);
-    }
-
-    .segmented button {
-      padding: 0 12px;
-      background: transparent;
-      color: var(--muted);
-    }
-
-    .segmented button.active {
-      background: var(--panel);
-      color: var(--ink);
-      box-shadow: 0 1px 8px rgba(27, 40, 45, .12);
-    }
-
-    .icon-button,
-    .ghost {
-      display: inline-grid;
-      place-items: center;
-      width: 42px;
-      border: 1px solid var(--line);
-      background: var(--panel);
-    }
-
-    .primary {
-      padding: 0 14px;
-      background: var(--focus);
-      color: #fff;
-      font-weight: 700;
-    }
-
-    .ghost {
-      width: auto;
-      padding: 0 12px;
-    }
-
-    .toolbar-spacer {
-      flex: 1 1 auto;
-    }
-
-    .form {
-      display: grid;
-      grid-template-columns: minmax(150px, 1.1fr) minmax(150px, .9fr) minmax(90px, .45fr) minmax(150px, .85fr) minmax(84px, .45fr) minmax(120px, .65fr) minmax(150px, .8fr) auto;
-      gap: 9px;
-      align-items: end;
-      padding: 12px;
-      margin-bottom: 12px;
-    }
-
-    .form.is-hidden {
-      display: none;
-    }
-
-    .form-head {
-      grid-column: 1 / -1;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      min-width: 0;
-    }
-
-    .form-title {
-      margin: 0;
-      font-size: .95rem;
-      font-weight: 800;
-    }
-
-    .sync-panel {
-      grid-template-columns: minmax(180px, 1fr) minmax(220px, 1.2fr) minmax(150px, .8fr) auto auto auto;
-    }
-
-    .sync-status {
-      grid-column: 1 / -1;
-      margin: 0;
-      color: var(--muted);
-      font-size: .78rem;
-      line-height: 1.5;
-    }
-
-    .lecture-control,
-    .alert-control {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 6px;
-    }
-
-    .lecture-control input,
-    .alert-control input,
-    .alert-control select {
-      grid-column: 1 / -1;
-    }
-
-    .small-button {
-      min-height: 40px;
-      padding: 0 10px;
-      border: 1px solid var(--line);
-      border-radius: 7px;
-      background: var(--panel);
-      color: var(--ink);
-      cursor: pointer;
-      font-weight: 700;
-    }
-
-    .is-hidden {
-      display: none;
-    }
-
-    label {
-      display: grid;
-      gap: 5px;
-      color: var(--muted);
-      font-size: .78rem;
-      font-weight: 700;
-    }
-
-    input,
-    select {
-      width: 100%;
-      min-height: 40px;
-      border: 1px solid var(--line);
-      border-radius: 7px;
-      background: var(--panel);
-      color: var(--ink);
-      padding: 0 10px;
-    }
-
-    input:focus,
-    select:focus,
-    button:focus-visible {
-      outline: 3px solid rgba(15, 123, 116, .25);
-      outline-offset: 2px;
-    }
-
-    .summary {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 1px;
-      overflow: hidden;
-      margin-bottom: 12px;
-    }
-
-    .metric {
-      padding: 12px;
-      background: rgba(255, 255, 255, .78);
-      min-width: 0;
-    }
-
-    .metric span {
-      display: block;
-      color: var(--muted);
-      font-size: .74rem;
-      font-weight: 700;
-    }
-
-    .metric b {
-      display: block;
-      margin-top: 3px;
-      font-size: 1.55rem;
-      line-height: 1;
-    }
-
-    .list {
-      display: grid;
-      gap: 8px;
-    }
-
-    .week-board {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
-      align-items: start;
-    }
-
-    .day-column {
-      min-width: 0;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: rgba(255, 255, 255, .68);
-      box-shadow: 0 8px 22px rgba(21, 37, 44, .07);
-      overflow: hidden;
-    }
-
-    .day-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      padding: 10px;
-      border-bottom: 1px solid var(--line);
-      background: rgba(238, 242, 240, .78);
-      font-weight: 800;
-    }
-
-    .day-stack {
-      display: grid;
-      gap: 8px;
-      padding: 8px;
-    }
-
-    .day-empty {
-      padding: 18px 8px;
-      color: var(--muted);
-      font-size: .82rem;
-      text-align: center;
-    }
-
-    .assignment {
-      display: grid;
-      grid-template-columns: auto 1fr auto auto;
-      gap: 10px;
-      align-items: center;
-      min-height: 74px;
-      padding: 11px;
-      border: 1px solid var(--line);
-      border-left: 6px solid var(--focus);
-      border-radius: 8px;
-      background: rgba(255, 255, 255, .92);
-      box-shadow: 0 8px 22px rgba(21, 37, 44, .08);
-    }
-
-    .assignment.warn {
-      border-left-color: var(--warn);
-      background: var(--warn-soft);
-    }
-
-    .assignment.danger,
-    .assignment.overdue {
-      border-left-color: var(--danger);
-      background: var(--danger-soft);
-    }
-
-    .assignment.done {
-      opacity: .66;
-      border-left-color: var(--done);
-    }
-
-    .lecture-card {
-      grid-template-columns: auto 1fr auto;
-      align-items: start;
-      min-height: 0;
-      padding: 10px;
-      border-left-width: 5px;
-      box-shadow: none;
-    }
-
-    .lecture-card .due {
-      grid-column: 2 / 4;
-      text-align: left;
-      min-width: 0;
-      margin-top: 4px;
-      font-size: .95rem;
-    }
-
-    .check {
-      width: 24px;
-      height: 24px;
-      accent-color: var(--focus);
-    }
-
-    .main {
-      min-width: 0;
-    }
-
-    .title-line {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      align-items: baseline;
-    }
-
-    .name {
-      font-weight: 800;
-      overflow-wrap: anywhere;
-    }
-
-    .task-name {
-      display: block;
-      margin-top: 3px;
-      color: var(--muted);
-      font-size: .86rem;
-      overflow-wrap: anywhere;
-    }
-
-    .course {
-      color: var(--muted);
-      font-size: .88rem;
-      overflow-wrap: anywhere;
-    }
-
-    .meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 7px;
-      color: var(--muted);
-      font-size: .83rem;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      min-height: 26px;
-      padding: 0 8px;
-      border: 1px solid rgba(0, 0, 0, .08);
-      border-radius: 999px;
-      background: rgba(255, 255, 255, .62);
-      white-space: nowrap;
-    }
-
-    .due {
-      min-width: 86px;
-      text-align: right;
-      font-weight: 800;
-    }
-
-    .delete {
-      width: 34px;
-      height: 34px;
-      border: 0;
-      border-radius: 7px;
-      background: transparent;
-      color: var(--muted);
-      cursor: pointer;
-      font-size: 1.2rem;
-    }
-
-    .delete:hover {
-      background: rgba(179, 38, 30, .1);
-      color: var(--danger);
-    }
-
-    .empty {
-      padding: 26px 16px;
-      border: 1px dashed var(--line);
-      border-radius: 8px;
-      background: rgba(255, 255, 255, .58);
-      color: var(--muted);
-      text-align: center;
-    }
-
-    .notice {
-      margin-top: 10px;
-      color: var(--muted);
-      font-size: .78rem;
-      line-height: 1.5;
-    }
-
-    @media (max-width: 980px) {
-      .form {
-        grid-template-columns: 1fr 1fr 1fr;
-      }
-
-      .form .primary {
-        grid-column: 1 / -1;
-      }
-    }
-
-    @media (max-width: 760px) {
-      .app {
-        padding: 12px;
-      }
-
-      header {
-        grid-template-columns: 1fr;
-      }
-
-      .today {
-        justify-self: start;
-        min-height: 58px;
-        grid-auto-flow: column;
-        gap: 8px;
-      }
-
-      .summary {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .week-board {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 540px) {
-      .toolbar {
-        align-items: stretch;
-      }
-
-      .segmented {
-        width: 100%;
-      }
-
-      .toolbar-spacer {
-        display: none;
-      }
-
-      .form,
-      .summary {
-        grid-template-columns: 1fr;
-      }
-
-      .assignment {
-        grid-template-columns: auto 1fr auto;
-      }
-
-      .due {
-        grid-column: 2 / 4;
-        text-align: left;
-      }
-
-      .week-board {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>大学課題アラート</title>
+<style>
+  /* ===== テーマ変数 ===== */
+  :root, [data-theme="light"] {
+    --bg: #f7f7f4;
+    --bg-grad-a: rgba(15,123,116,.09);
+    --bg-grad-b: rgba(179,106,0,.08);
+    --panel: #ffffff;
+    --panel-2: rgba(255,255,255,.88);
+    --panel-3: #f3f5f4;
+    --ink: #1e2428;
+    --muted: #647078;
+    --line: #d8dedb;
+    --focus: #0f7b74;
+    --danger: #b3261e;
+    --danger-soft: #fff0ee;
+    --danger-border: #f5c6c2;
+    --danger-label: #b3261e;
+    --warn: #b36a00;
+    --success: #1a6e3c;
+    --info: #185fa5;
+    --info-soft: #eef4fc;
+    --shadow: 0 1px 3px rgba(21,37,44,.08), 0 4px 12px rgba(21,37,44,.06);
+    --popup-overlay: rgba(21,37,44,.18);
+    --lec-btn-color: #0f7b74;
+    --carryover-bg: #fff0ee;
+    --task-card-bg: #f7f8f7;
+    --theme-toggle-icon: "🌙";
+  }
+
+  [data-theme="dark"] {
+    --bg: #1a1d23;
+    --bg-grad-a: rgba(15,123,116,.12);
+    --bg-grad-b: rgba(179,106,0,.10);
+    --panel: #23272f;
+    --panel-2: rgba(35,39,47,.95);
+    --panel-3: #2a2f38;
+    --ink: #e8eaf0;
+    --muted: #8a9099;
+    --line: #353a44;
+    --focus: #1a9e94;
+    --danger: #e05a52;
+    --danger-soft: #2e1a1a;
+    --danger-border: #5a2a2a;
+    --danger-label: #f08078;
+    --warn: #d4820a;
+    --success: #3ab870;
+    --info: #4a9ee0;
+    --info-soft: #1a2a3e;
+    --shadow: 0 1px 3px rgba(0,0,0,.25), 0 4px 12px rgba(0,0,0,.20);
+    --popup-overlay: rgba(0,0,0,.45);
+    --lec-btn-color: #1a9e94;
+    --carryover-bg: #2e1a1a;
+    --task-card-bg: #2a2f38;
+    --theme-toggle-icon: "☀️";
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background:
+      linear-gradient(135deg, var(--bg-grad-a), transparent 36%),
+      linear-gradient(315deg, var(--bg-grad-b), transparent 34%),
+      var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 18px;
+    transition: background .2s, color .2s;
+  }
+
+  .app { max-width: 980px; margin: 0 auto; }
+
+  /* ===== ヘッダー ===== */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  header h1 {
+    font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 3px;
+  }
+
+  .sem { font-size: .78rem; color: var(--muted); }
+
+  .header-right { display: flex; align-items: center; gap: 8px; }
+
+  .date-badge {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 6px 12px;
+    text-align: center;
+    background: var(--panel-2);
+    box-shadow: var(--shadow);
+    min-width: 58px;
+  }
+
+  .date-badge .mo { font-size: .68rem; color: var(--muted); }
+  .date-badge .dy { font-size: 1.3rem; font-weight: 700; line-height: 1.1; color: var(--ink); }
+
+  /* ===== ボタン共通 ===== */
+  button { font: inherit; cursor: pointer; }
+
+  .btn {
+    min-height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: var(--panel);
+    color: var(--ink);
+    font-size: .78rem;
+    transition: background .15s;
+  }
+
+  .btn:hover { background: var(--panel-3); }
+
+  .btn-primary {
+    background: var(--focus);
+    color: #fff;
+    border: none;
+    border-radius: 7px;
+    padding: 0 14px;
+    min-height: 32px;
+    font-size: .78rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .btn-primary:hover { opacity: .9; }
+
+  /* テーマ切り替えボタン */
+  .theme-toggle {
+    min-height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: var(--panel);
+    color: var(--ink);
+    font-size: .82rem;
+    cursor: pointer;
+  }
+
+  /* ===== サマリー ===== */
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .metric {
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 9px 11px;
+    box-shadow: var(--shadow);
+  }
+
+  .metric span { display: block; font-size: .68rem; color: var(--muted); font-weight: 700; margin-bottom: 2px; }
+  .metric b { font-size: 1.3rem; font-weight: 700; line-height: 1; color: var(--ink); }
+  .metric b.d { color: var(--danger); }
+  .metric b.s { color: var(--success); }
+
+  /* ===== メインカラム ===== */
+  .columns {
+    display: grid;
+    grid-template-columns: minmax(0,1fr) minmax(0,1.6fr);
+    gap: 12px;
+    align-items: start;
+  }
+
+  /* ===== カード ===== */
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .card-header p { font-size: .85rem; font-weight: 700; color: var(--ink); }
+
+  /* ===== テーブル ===== */
+  table { width: 100%; border-collapse: collapse; font-size: .78rem; table-layout: fixed; }
+  thead tr { background: var(--panel-3); }
+  th { text-align: left; padding: 6px 8px; font-size: .68rem; font-weight: 700; color: var(--muted); border-bottom: 1px solid var(--line); }
+  td { padding: 7px 8px; border-bottom: 1px solid var(--line); color: var(--ink); vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+
+  .day-b {
+    display: inline-block;
+    background: var(--info-soft);
+    color: var(--info);
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 5px;
+  }
+
+  .lec-btn {
+    background: none;
+    border: none;
+    font: inherit;
+    font-size: .78rem;
+    color: var(--lec-btn-color);
+    cursor: pointer;
+    text-decoration: underline;
+    text-align: left;
+    padding: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    display: block;
+  }
+
+  .lec-btn:hover { opacity: .75; }
+
+  .icon-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: .8rem;
+    padding: 2px 4px;
+  }
+
+  .icon-btn:hover { color: var(--danger); }
+
+  /* ===== 右カラム：スタック ===== */
+  .stack-section { padding: 10px 12px; }
+  .stack-section + .stack-section { border-top: 1px solid var(--line); }
+  .stack-section.carryover { background: var(--carryover-bg); }
+
+  .sec-label {
+    font-size: .68rem;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .sec-label.danger { color: var(--danger-label); }
+
+  .task-cards { display: grid; gap: 6px; }
+
+  .task-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--task-card-bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+
+  .task-card.co { border-color: var(--danger-border); background: var(--panel); }
+  .task-card.done { opacity: .5; }
+
+  .task-info .ln { font-size: .82rem; font-weight: 700; color: var(--ink); }
+  .task-info .lm { font-size: .72rem; color: var(--muted); margin-top: 1px; }
+  .task-info .ln.done-text { text-decoration: line-through; }
+
+  input[type=checkbox] {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--focus);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* ===== ポップアップ ===== */
+  .popup-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--popup-overlay);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+
+  .popup {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px;
+    width: 300px;
+    box-shadow: var(--shadow);
+  }
+
+  .popup.wide { width: min(520px, calc(100vw - 32px)); }
+
+  .popup-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .popup-head p { font-size: .88rem; font-weight: 700; color: var(--ink); }
+
+  .popup-close {
+    background: none;
+    border: none;
+    font-size: 1rem;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 2px 6px;
+  }
+
+  .field { margin-bottom: 10px; }
+
+  .field label {
+    display: block;
+    font-size: .68rem;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .field input, .field textarea, .field select {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    padding: 6px 9px;
+    font: inherit;
+    font-size: .78rem;
+    color: var(--ink);
+    background: var(--panel-3);
+    resize: none;
+  }
+
+  .field textarea { height: 56px; }
+
+  .url-row { display: flex; gap: 6px; align-items: center; }
+  .url-row input { flex: 1; }
+
+  .url-link {
+    font-size: .72rem;
+    color: var(--info);
+    text-decoration: none;
+    white-space: nowrap;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 4px 8px;
+    background: var(--panel);
+  }
+
+  .url-link:hover { background: var(--panel-3); }
+
+  .popup-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 14px;
+  }
+
+  .empty {
+    color: var(--muted);
+    font-size: .72rem;
+    padding: 8px 0;
+  }
+
+  .toolbar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  .sync-status {
+    color: var(--muted);
+    font-size: .72rem;
+    line-height: 1.45;
+  }
+
+  @media (max-width: 760px) {
+    body { padding: 12px; }
+    header { align-items: flex-start; gap: 10px; }
+    .header-right { flex-wrap: wrap; justify-content: flex-end; }
+    .summary { grid-template-columns: repeat(2,1fr); }
+    .columns { grid-template-columns: 1fr; }
+  }
+</style>
 </head>
 <body>
-  <main class="app">
-    <header>
-      <div>
-        <h1>大学課題アラート</h1>
-        <p class="sub">月〜土の講義ごとに、今週の課題と通知を管理します。</p>
+<div class="app">
+  <header>
+    <div>
+      <h1>大学課題アラート</h1>
+      <p class="sem" id="semesterLabel"></p>
+    </div>
+    <div class="header-right">
+      <button class="theme-toggle" id="themeBtn">🌙 ダーク</button>
+      <button class="btn" id="semesterBtn">学期設定</button>
+      <button class="btn" id="syncToggleButton">同期設定</button>
+      <div class="date-badge">
+        <p class="mo" id="monthLabel"></p>
+        <p class="dy" id="dayLabel"></p>
       </div>
-      <div class="today" aria-label="今日">
-        <span id="monthLabel"></span>
-        <b id="dayLabel"></b>
+    </div>
+  </header>
+
+  <div class="summary">
+    <div class="metric"><span>今週</span><b id="weekMetric">第1回</b></div>
+    <div class="metric"><span>今週の課題</span><b id="thisWeekMetric">0</b></div>
+    <div class="metric"><span>繰り越し</span><b class="d" id="carryMetric">0</b></div>
+    <div class="metric"><span>完了済み</span><b class="s" id="doneMetric">0</b></div>
+  </div>
+
+  <div class="toolbar">
+    <button class="btn" id="exportButton">JSON書き出し</button>
+    <label class="btn">
+      JSON読込
+      <input id="importInput" type="file" accept="application/json" hidden>
+    </label>
+  </div>
+
+  <div class="columns">
+    <div class="card">
+      <div class="card-header">
+        <p>毎週の課題マスタ</p>
+        <button class="btn" id="addMasterBtn">+ 追加</button>
       </div>
-    </header>
+      <table>
+        <colgroup>
+          <col style="width:20%">
+          <col style="width:70%">
+          <col style="width:10%">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>曜日</th>
+            <th>講義名</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="masterBody"></tbody>
+      </table>
+    </div>
 
-    <section class="toolbar" aria-label="表示設定">
-      <div class="segmented" role="group" aria-label="表示フィルター">
-        <button type="button" class="active" data-filter="active">未完了</button>
-        <button type="button" data-filter="all">すべて</button>
-        <button type="button" data-filter="done">完了</button>
+    <div class="card" id="stackCard"></div>
+  </div>
+</div>
+
+<div id="masterPopup" class="popup-overlay" style="display:none;">
+  <div class="popup">
+    <div class="popup-head">
+      <p id="masterPopupTitle">講義</p>
+      <button class="popup-close" id="closeMasterPopup">✕</button>
+    </div>
+    <div class="field" id="masterWeekdayField">
+      <label>曜日</label>
+      <select id="masterWeekdayInput">
+        <option value="mon">月</option>
+        <option value="tue">火</option>
+        <option value="wed">水</option>
+        <option value="thu">木</option>
+        <option value="fri">金</option>
+        <option value="sat">土</option>
+      </select>
+    </div>
+    <div class="field" id="masterLectureField">
+      <label>講義名</label>
+      <input id="masterLectureInput" type="text" placeholder="講義名">
+    </div>
+    <div class="field">
+      <label>課題名</label>
+      <input id="masterTaskInput" type="text" placeholder="毎週の課題名">
+    </div>
+    <div class="field">
+      <label>メモ</label>
+      <textarea id="masterMemoInput" placeholder="メモを入力..."></textarea>
+    </div>
+    <div class="field">
+      <label>備考</label>
+      <textarea id="masterNoteInput" placeholder="備考を入力..."></textarea>
+    </div>
+    <div class="field">
+      <label>参照URL</label>
+      <div class="url-row">
+        <input id="masterUrlInput" type="url" placeholder="https://...">
+        <a id="masterUrlOpen" href="#" target="_blank" rel="noopener" class="url-link">開く</a>
       </div>
-      <div class="toolbar-spacer"></div>
-      <button type="button" class="ghost" id="notifyButton">通知を許可</button>
-      <button type="button" class="ghost" id="syncToggleButton">同期設定</button>
-      <button type="button" class="icon-button" id="exportButton" title="JSONを書き出す" aria-label="JSONを書き出す">↓</button>
-      <label class="icon-button" title="JSONを読み込む" aria-label="JSONを読み込む">
-        ↑
-        <input id="importInput" type="file" accept="application/json" hidden>
-      </label>
-    </section>
+    </div>
+    <div class="popup-footer">
+      <button class="btn" id="cancelMasterBtn">キャンセル</button>
+      <button class="btn-primary" id="saveMasterBtn">保存</button>
+    </div>
+  </div>
+</div>
 
-    <section class="form sync-panel is-hidden" id="syncPanel" aria-label="同期設定">
-      <div class="form-head">
-        <p class="form-title">同期設定</p>
-        <button type="button" class="icon-button" id="closeSyncButton" title="閉じる" aria-label="閉じる">×</button>
-      </div>
-      <label>
-        Supabase URL
-        <input id="syncUrlInput" placeholder="https://xxxx.supabase.co">
-      </label>
-      <label>
-        anon key
-        <input id="syncKeyInput" type="password" placeholder="public anon key">
-      </label>
-      <label>
-        同期ID
-        <input id="syncIdInput" maxlength="80" placeholder="例: my-university-board">
-      </label>
-      <button type="button" class="small-button" id="saveSyncButton">保存</button>
-      <button type="button" class="small-button" id="pullSyncButton">受信</button>
-      <button type="button" class="primary" id="pushSyncButton">送信</button>
-      <p class="sync-status" id="syncStatus">Supabase の `assignment_sync` テーブルを作成して、同じ同期IDを各端末に設定してください。</p>
-    </section>
+<div id="syncPanel" class="popup-overlay" style="display:none;">
+  <div class="popup wide">
+    <div class="popup-head">
+      <p>同期設定</p>
+      <button class="popup-close" id="closeSyncButton">✕</button>
+    </div>
+    <div class="field">
+      <label>Supabase URL</label>
+      <input id="syncUrlInput" placeholder="https://xxxx.supabase.co">
+    </div>
+    <div class="field">
+      <label>publishable key</label>
+      <input id="syncKeyInput" type="password" placeholder="publishable key">
+    </div>
+    <div class="field">
+      <label>同期ID</label>
+      <input id="syncIdInput" maxlength="80" placeholder="例: my-university-board">
+    </div>
+    <p class="sync-status" id="syncStatus">Supabase の assignment_sync テーブルを作成して、同じ同期IDを各端末に設定してください。</p>
+    <div class="popup-footer">
+      <button class="btn" id="saveSyncButton">保存</button>
+      <button class="btn" id="pullSyncButton">受信</button>
+      <button class="btn-primary" id="pushSyncButton">送信</button>
+    </div>
+  </div>
+</div>
 
-    <form class="form is-hidden" id="assignmentForm">
-      <div class="form-head">
-        <p class="form-title">講義と今週の課題を追加</p>
-        <button type="button" class="icon-button" id="closeFormButton" title="閉じる" aria-label="閉じる">×</button>
-      </div>
-      <label>
-        課題名
-        <input id="titleInput" required maxlength="80" placeholder="例: 統計学レポート">
-      </label>
-      <label>
-        講義
-        <div class="lecture-control">
-          <select id="lectureSelect"></select>
-          <button class="small-button" id="saveLectureButton" type="button">登録</button>
-          <input id="newLectureInput" class="is-hidden" maxlength="60" placeholder="講義名を入力">
-        </div>
-      </label>
-      <label>
-        曜日
-        <select id="weekdayInput">
-          <option value="mon">月</option>
-          <option value="tue">火</option>
-          <option value="wed">水</option>
-          <option value="thu">木</option>
-          <option value="fri">金</option>
-          <option value="sat">土</option>
-        </select>
-      </label>
-      <label>
-        締切
-        <input id="dueInput" type="datetime-local" required>
-      </label>
-      <label>
-        優先度
-        <select id="priorityInput">
-          <option value="高">高</option>
-          <option value="中" selected>中</option>
-          <option value="低">低</option>
-        </select>
-      </label>
-      <label>
-        通知方法
-        <select id="alertModeInput">
-          <option value="specific" selected>指定日時</option>
-          <option value="repeat">繰り返し</option>
-          <option value="off">通知なし</option>
-        </select>
-      </label>
-      <label id="specificAlertLabel">
-        通知日時
-        <input id="specificAlertInput" type="datetime-local">
-      </label>
-      <label id="repeatAlertLabel" class="is-hidden">
-        繰り返し
-        <select id="repeatInput">
-          <option value="daily7">7日前から毎日</option>
-          <option value="hourly48">48時間前から1時間ごと</option>
-          <option value="halfHourly24">24時間前から30分ごと</option>
-          <option value="off">通知なし</option>
-        </select>
-      </label>
-      <button class="primary" type="submit">登録</button>
-    </form>
+<script>
+  const MASTER_KEY = "university-assignment-master-v2";
+  const COMPLETION_KEY = "university-assignment-completions-v2";
+  const SETTINGS_KEY = "university-assignment-settings-v2";
+  const SYNC_KEY = "university-assignment-sync-v1";
+  const CHECK_INTERVAL_MS = 30000;
+  const AUTO_SYNC_DELAY_MS = 1200;
+  const AUTO_PULL_INTERVAL_MS = 30000;
+  const WEEKDAYS = [
+    { id: "mon", label: "月", long: "月曜" },
+    { id: "tue", label: "火", long: "火曜" },
+    { id: "wed", label: "水", long: "水曜" },
+    { id: "thu", label: "木", long: "木曜" },
+    { id: "fri", label: "金", long: "金曜" },
+    { id: "sat", label: "土", long: "土曜" }
+  ];
 
-    <section class="summary" aria-label="課題サマリー">
-      <div class="metric"><span>今日まで</span><b id="dueTodayCount">0</b></div>
-      <div class="metric"><span>3日以内</span><b id="soonCount">0</b></div>
-      <div class="metric"><span>未完了講義</span><b id="activeCount">0</b></div>
-      <div class="metric"><span>通知あり</span><b id="alertCount">0</b></div>
-    </section>
+  const state = {
+    masters: loadMasters(),
+    completions: loadCompletions(),
+    settings: loadSettings(),
+    sync: loadSyncConfig(),
+    editingMasterId: null,
+    syncApplying: false,
+    autoSyncTimer: null
+  };
 
-    <section class="week-board" id="assignmentList" aria-live="polite"></section>
-    <p class="notice">通知はこのページを開いている間に動きます。Notion に埋め込む場合は、GitHub Pages や Netlify などにこの HTML を置いた URL を /embed してください。</p>
-  </main>
+  const els = {
+    semesterLabel: document.querySelector("#semesterLabel"),
+    monthLabel: document.querySelector("#monthLabel"),
+    dayLabel: document.querySelector("#dayLabel"),
+    themeBtn: document.querySelector("#themeBtn"),
+    semesterBtn: document.querySelector("#semesterBtn"),
+    syncToggle: document.querySelector("#syncToggleButton"),
+    masterBody: document.querySelector("#masterBody"),
+    stackCard: document.querySelector("#stackCard"),
+    weekMetric: document.querySelector("#weekMetric"),
+    thisWeekMetric: document.querySelector("#thisWeekMetric"),
+    carryMetric: document.querySelector("#carryMetric"),
+    doneMetric: document.querySelector("#doneMetric"),
+    addMaster: document.querySelector("#addMasterBtn"),
+    masterPopup: document.querySelector("#masterPopup"),
+    masterPopupTitle: document.querySelector("#masterPopupTitle"),
+    closeMasterPopup: document.querySelector("#closeMasterPopup"),
+    cancelMaster: document.querySelector("#cancelMasterBtn"),
+    saveMaster: document.querySelector("#saveMasterBtn"),
+    masterWeekdayField: document.querySelector("#masterWeekdayField"),
+    masterLectureField: document.querySelector("#masterLectureField"),
+    masterWeekday: document.querySelector("#masterWeekdayInput"),
+    masterLecture: document.querySelector("#masterLectureInput"),
+    masterTask: document.querySelector("#masterTaskInput"),
+    masterMemo: document.querySelector("#masterMemoInput"),
+    masterNote: document.querySelector("#masterNoteInput"),
+    masterUrl: document.querySelector("#masterUrlInput"),
+    masterUrlOpen: document.querySelector("#masterUrlOpen"),
+    syncPanel: document.querySelector("#syncPanel"),
+    closeSync: document.querySelector("#closeSyncButton"),
+    syncUrl: document.querySelector("#syncUrlInput"),
+    syncKey: document.querySelector("#syncKeyInput"),
+    syncId: document.querySelector("#syncIdInput"),
+    syncStatus: document.querySelector("#syncStatus"),
+    saveSync: document.querySelector("#saveSyncButton"),
+    pullSync: document.querySelector("#pullSyncButton"),
+    pushSync: document.querySelector("#pushSyncButton"),
+    exportButton: document.querySelector("#exportButton"),
+    importInput: document.querySelector("#importInput")
+  };
 
-  <script>
-    const STORAGE_KEY = "university-assignment-alerts-v1";
-    const LECTURES_KEY = "university-assignment-lectures-v1";
-    const SYNC_KEY = "university-assignment-sync-v1";
-    const CHECK_INTERVAL_MS = 60 * 1000;
-    const ADD_LECTURE_VALUE = "__add_lecture__";
-    const WEEKDAYS = [
-      { id: "mon", label: "月" },
-      { id: "tue", label: "火" },
-      { id: "wed", label: "水" },
-      { id: "thu", label: "木" },
-      { id: "fri", label: "金" },
-      { id: "sat", label: "土" }
-    ];
-    const REPEAT_CYCLES = {
-      daily7: { label: "7日前から毎日", startHours: 168, intervalMinutes: 1440 },
-      hourly48: { label: "48時間前から1時間ごと", startHours: 48, intervalMinutes: 60 },
-      halfHourly24: { label: "24時間前から30分ごと", startHours: 24, intervalMinutes: 30 },
-      off: { label: "通知なし", startHours: 0, intervalMinutes: 0 }
-    };
-    const now = () => new Date();
+  function makeId() {
+    return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
 
-    const state = {
-      filter: "active",
-      formOpen: false,
-      syncOpen: false,
-      assignments: loadAssignments(),
-      lectures: [],
-      sync: loadSyncConfig()
-    };
-    state.lectures = loadLectures(state.assignments);
+  function today() {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }
 
-    const elements = {
-      monthLabel: document.querySelector("#monthLabel"),
-      dayLabel: document.querySelector("#dayLabel"),
-      syncToggle: document.querySelector("#syncToggleButton"),
-      syncPanel: document.querySelector("#syncPanel"),
-      closeSync: document.querySelector("#closeSyncButton"),
-      syncUrl: document.querySelector("#syncUrlInput"),
-      syncKey: document.querySelector("#syncKeyInput"),
-      syncId: document.querySelector("#syncIdInput"),
-      saveSync: document.querySelector("#saveSyncButton"),
-      pullSync: document.querySelector("#pullSyncButton"),
-      pushSync: document.querySelector("#pushSyncButton"),
-      syncStatus: document.querySelector("#syncStatus"),
-      closeForm: document.querySelector("#closeFormButton"),
-      form: document.querySelector("#assignmentForm"),
-      title: document.querySelector("#titleInput"),
-      lecture: document.querySelector("#lectureSelect"),
-      newLecture: document.querySelector("#newLectureInput"),
-      saveLecture: document.querySelector("#saveLectureButton"),
-      weekday: document.querySelector("#weekdayInput"),
-      due: document.querySelector("#dueInput"),
-      priority: document.querySelector("#priorityInput"),
-      alertMode: document.querySelector("#alertModeInput"),
-      specificAlert: document.querySelector("#specificAlertInput"),
-      repeat: document.querySelector("#repeatInput"),
-      specificAlertLabel: document.querySelector("#specificAlertLabel"),
-      repeatAlertLabel: document.querySelector("#repeatAlertLabel"),
-      list: document.querySelector("#assignmentList"),
-      dueTodayCount: document.querySelector("#dueTodayCount"),
-      soonCount: document.querySelector("#soonCount"),
-      activeCount: document.querySelector("#activeCount"),
-      alertCount: document.querySelector("#alertCount"),
-      notify: document.querySelector("#notifyButton"),
-      exportButton: document.querySelector("#exportButton"),
-      importInput: document.querySelector("#importInput")
-    };
+  function defaultSemesterStart() {
+    const date = new Date();
+    return `${date.getFullYear()}-04-07`;
+  }
 
-    function loadAssignments() {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        try {
-          return JSON.parse(saved).map(normalizeAssignment);
-        } catch {
-          localStorage.removeItem(STORAGE_KEY);
-        }
-      }
-
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(23, 59, 0, 0);
-      const nextWeek = new Date();
-      nextWeek.setDate(nextWeek.getDate() + 7);
-      nextWeek.setHours(18, 0, 0, 0);
-
-      return [
-        normalizeAssignment({
-          title: "英語プレゼン準備",
-          lecture: "Academic English",
-          weekday: "mon",
-          due: toInputDate(tomorrow),
-          priority: "高",
-          alertMode: "specific",
-          alertAt: toInputDate(new Date(tomorrow.getTime() - 24 * 36e5))
-        }),
-        normalizeAssignment({
-          title: "ゼミ文献メモ",
-          lecture: "専門演習",
-          weekday: "wed",
-          due: toInputDate(nextWeek),
-          priority: "中",
-          alertMode: "repeat",
-          repeatCycle: "daily7"
-        })
-      ];
+  function loadSettings() {
+    const fallback = { semesterStart: defaultSemesterStart(), theme: "light" };
+    try {
+      return { ...fallback, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}") };
+    } catch {
+      return fallback;
     }
+  }
 
-    function loadSyncConfig() {
-      const saved = localStorage.getItem(SYNC_KEY);
-      if (!saved) return { url: "", key: "", id: "" };
+  function loadMasters() {
+    const saved = localStorage.getItem(MASTER_KEY);
+    if (saved) {
       try {
-        return { url: "", key: "", id: "", ...JSON.parse(saved) };
+        return JSON.parse(saved).map(normalizeMaster);
       } catch {
-        localStorage.removeItem(SYNC_KEY);
-        return { url: "", key: "", id: "" };
+        localStorage.removeItem(MASTER_KEY);
       }
     }
+    return [
+      normalizeMaster({ weekday: "mon", lecture: "Academic English", taskName: "英語プレゼン準備", memo: "スライド5枚以上、英語で発表", note: "", url: "https://classroom.google.com/" }),
+      normalizeMaster({ weekday: "wed", lecture: "日本史概論", taskName: "リアクションペーパー", memo: "", note: "", url: "" }),
+      normalizeMaster({ weekday: "thu", lecture: "統計学入門", taskName: "演習問題", memo: "", note: "", url: "" }),
+      normalizeMaster({ weekday: "fri", lecture: "社会学概論", taskName: "ゼミ文献メモ", memo: "", note: "", url: "" })
+    ];
+  }
 
-    function loadLectures(assignments) {
-      const saved = localStorage.getItem(LECTURES_KEY);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) return uniqueLectures(parsed);
-        } catch {
-          localStorage.removeItem(LECTURES_KEY);
-        }
-      }
-      return uniqueLectures([
-        "Academic English",
-        "専門演習",
-        ...assignments.map(item => item.lecture || item.course).filter(Boolean)
-      ]);
+  function loadCompletions() {
+    try {
+      return JSON.parse(localStorage.getItem(COMPLETION_KEY) || "{}");
+    } catch {
+      return {};
     }
+  }
 
-    function uniqueLectures(values) {
-      return [...new Set(values.map(value => String(value).trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, "ja"));
+  function loadSyncConfig() {
+    try {
+      return { url: "", key: "", id: "", ...JSON.parse(localStorage.getItem(SYNC_KEY) || "{}") };
+    } catch {
+      return { url: "", key: "", id: "" };
     }
+  }
 
-    function normalizeAssignment(item) {
-      const legacyCycle = item.cycle;
-      const alertMode = item.alertMode || (legacyCycle === "off" ? "off" : legacyCycle ? "repeat" : "specific");
-      const repeatCycle = REPEAT_CYCLES[item.repeatCycle] ? item.repeatCycle : (REPEAT_CYCLES[legacyCycle] ? legacyCycle : "daily7");
-      const due = item.due;
-      const defaultAlert = due ? toInputDate(new Date(new Date(due).getTime() - 24 * 36e5)) : "";
+  function normalizeMaster(item) {
+    return {
+      id: item.id || makeId(),
+      weekday: WEEKDAYS.some(day => day.id === item.weekday) ? item.weekday : "mon",
+      lecture: String(item.lecture || "新しい講義"),
+      taskName: String(item.taskName || item.title || "今週の課題"),
+      memo: String(item.memo || ""),
+      note: String(item.note || ""),
+      url: String(item.url || item.referenceUrl || "")
+    };
+  }
 
-      return {
-        id: item.id || crypto.randomUUID(),
-        title: String(item.title || "無題の課題"),
-        lecture: String(item.lecture || item.course || ""),
-        course: String(item.lecture || item.course || ""),
-        weekday: WEEKDAYS.some(day => day.id === item.weekday) ? item.weekday : "mon",
-        due,
-        priority: item.priority || "中",
-        alertMode,
-        alertAt: item.alertAt || defaultAlert,
-        repeatCycle,
-        done: Boolean(item.done),
-        notified: Boolean(item.notified),
-        lastNotifiedAt: item.lastNotifiedAt || null
-      };
-    }
+  function saveMasters() {
+    localStorage.setItem(MASTER_KEY, JSON.stringify(state.masters));
+    scheduleAutoPush();
+  }
 
-    function saveAssignments() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.assignments));
-    }
+  function saveCompletions() {
+    localStorage.setItem(COMPLETION_KEY, JSON.stringify(state.completions));
+    scheduleAutoPush();
+  }
 
-    function saveLectures() {
-      localStorage.setItem(LECTURES_KEY, JSON.stringify(state.lectures));
-    }
+  function saveSettings() {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(state.settings));
+    scheduleAutoPush();
+  }
 
-    function saveSyncConfig() {
-      state.sync = {
-        url: elements.syncUrl.value.trim().replace(/\/$/, ""),
-        key: elements.syncKey.value.trim(),
-        id: elements.syncId.value.trim()
-      };
-      localStorage.setItem(SYNC_KEY, JSON.stringify(state.sync));
-    }
+  function saveSyncConfig() {
+    state.sync = {
+      url: els.syncUrl.value.trim().replace(/\/$/, ""),
+      key: els.syncKey.value.trim(),
+      id: els.syncId.value.trim()
+    };
+    localStorage.setItem(SYNC_KEY, JSON.stringify(state.sync));
+  }
 
-    function addLecture(name) {
-      const lecture = String(name || "").trim();
-      if (!lecture) return "";
-      state.lectures = uniqueLectures([...state.lectures, lecture]);
-      saveLectures();
-      renderLectureOptions(lecture);
-      return lecture;
-    }
+  function getWeekNumber(offset = 0) {
+    const start = new Date(`${state.settings.semesterStart}T00:00:00`);
+    const diff = today() - start;
+    return Math.max(1, Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1 + offset);
+  }
 
-    function toInputDate(date) {
-      const pad = value => String(value).padStart(2, "0");
-      return [
-        date.getFullYear(),
-        pad(date.getMonth() + 1),
-        pad(date.getDate())
-      ].join("-") + "T" + [pad(date.getHours()), pad(date.getMinutes())].join(":");
-    }
+  function completionKey(masterId, week) {
+    return `${masterId}:${week}`;
+  }
 
-    function formatDue(value) {
-      return new Intl.DateTimeFormat("ja-JP", {
-        month: "numeric",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit"
-      }).format(new Date(value));
-    }
+  function isDone(masterId, week) {
+    return Boolean(state.completions[completionKey(masterId, week)]);
+  }
 
-    function getStatus(item) {
-      if (item.done) return "done";
-      const hours = (new Date(item.due) - now()) / 36e5;
-      if (hours < 0) return "overdue";
-      if (hours <= 24) return "danger";
-      if (hours <= 72) return "warn";
-      return "ok";
-    }
-
-    function getRemainingLabel(item) {
-      if (item.done) return "完了";
-      const diffMs = new Date(item.due) - now();
-      const absHours = Math.abs(diffMs) / 36e5;
-      if (diffMs < 0) {
-        if (absHours < 24) return `${Math.ceil(absHours)}時間超過`;
-        return `${Math.ceil(absHours / 24)}日超過`;
-      }
-      if (absHours < 1) return "1時間以内";
-      if (absHours < 24) return `あと${Math.ceil(absHours)}時間`;
-      return `あと${Math.ceil(absHours / 24)}日`;
-    }
-
-    function getAlertMethodLabel(item) {
-      if (item.alertMode === "off") return "通知なし";
-      if (item.alertMode === "specific") return "指定日時";
-      return "繰り返し";
-    }
-
-    function getNextAlertLabel(item) {
-      if (item.done) return "通知停止";
-      if (item.alertMode === "off") return "通知なし";
-      if (item.alertMode === "specific") {
-        if (item.notified) return "通知済み";
-        return item.alertAt ? `${formatDue(item.alertAt)}に通知` : "通知日時未設定";
-      }
-
-      const cycle = REPEAT_CYCLES[item.repeatCycle] || REPEAT_CYCLES.daily7;
-      if (item.repeatCycle === "off") return "通知なし";
-      const due = new Date(item.due);
-      const start = new Date(due.getTime() - cycle.startHours * 36e5);
-      if (now() < start) return `${formatDue(start)}から`;
-      if (!item.lastNotifiedAt) return "次回まもなく";
-      const next = new Date(new Date(item.lastNotifiedAt).getTime() + cycle.intervalMinutes * 60000);
-      return `${formatDue(next)}ごろ`;
-    }
-
-    function getAlertCount(item) {
-      if (item.done || item.alertMode === "off") return false;
-      if (item.alertMode === "repeat") return item.repeatCycle !== "off";
-      return Boolean(item.alertAt);
-    }
-
-    function renderDate() {
-      const today = now();
-      elements.monthLabel.textContent = `${today.getMonth() + 1}月`;
-      elements.dayLabel.textContent = today.getDate();
-      if (!elements.due.value) {
-        const defaultDue = new Date();
-        defaultDue.setHours(23, 59, 0, 0);
-        elements.due.value = toInputDate(defaultDue);
-      }
-      if (!elements.specificAlert.value) {
-        elements.specificAlert.value = toInputDate(new Date(new Date(elements.due.value).getTime() - 24 * 36e5));
-      }
-    }
-
-    function renderLectureOptions(selected = elements.lecture.value) {
-      elements.lecture.innerHTML = "";
-      state.lectures.forEach(lecture => {
-        const option = document.createElement("option");
-        option.value = lecture;
-        option.textContent = lecture;
-        elements.lecture.append(option);
-      });
-      const addOption = document.createElement("option");
-      addOption.value = ADD_LECTURE_VALUE;
-      addOption.textContent = "+ 講義を追加";
-      elements.lecture.append(addOption);
-      elements.lecture.value = state.lectures.includes(selected) ? selected : (state.lectures[0] || ADD_LECTURE_VALUE);
-      updateLectureInput();
-    }
-
-    function updateLectureInput() {
-      const adding = elements.lecture.value === ADD_LECTURE_VALUE;
-      elements.newLecture.classList.toggle("is-hidden", !adding);
-      elements.saveLecture.classList.toggle("is-hidden", !adding);
-      elements.newLecture.required = adding;
-      if (adding) elements.newLecture.focus();
-    }
-
-    function updateAlertFields() {
-      const mode = elements.alertMode.value;
-      elements.specificAlertLabel.classList.toggle("is-hidden", mode !== "specific");
-      elements.repeatAlertLabel.classList.toggle("is-hidden", mode !== "repeat");
-      elements.specificAlert.required = mode === "specific";
-    }
-
-    function renderSyncPanel() {
-      elements.syncPanel.classList.toggle("is-hidden", !state.syncOpen);
-      elements.syncUrl.value = state.sync.url || "";
-      elements.syncKey.value = state.sync.key || "";
-      elements.syncId.value = state.sync.id || "";
-      elements.syncToggle.textContent = state.sync.id ? "同期" : "同期設定";
-    }
-
-    function renderSummary() {
-      const active = state.assignments.filter(item => !item.done);
-      const dueToday = active.filter(item => {
-        const due = new Date(item.due);
-        const end = now();
-        end.setHours(23, 59, 59, 999);
-        return due <= end;
-      });
-      const soon = active.filter(item => {
-        const hours = (new Date(item.due) - now()) / 36e5;
-        return hours >= 0 && hours <= 72;
-      });
-      elements.dueTodayCount.textContent = dueToday.length;
-      elements.soonCount.textContent = soon.length;
-      elements.activeCount.textContent = active.length;
-      elements.alertCount.textContent = active.filter(getAlertCount).length;
-    }
-
-    function renderList() {
-      const filtered = state.assignments
-        .filter(item => {
-          if (state.filter === "active") return !item.done;
-          if (state.filter === "done") return item.done;
-          return true;
-        })
-        .sort((a, b) => new Date(a.due) - new Date(b.due));
-
-      elements.list.innerHTML = "";
-      WEEKDAYS.forEach(day => {
-        const column = document.createElement("section");
-        column.className = "day-column";
-        column.innerHTML = `
-          <div class="day-head">
-            <span>${day.label}曜日</span>
-            <button type="button" class="icon-button day-add" title="${day.label}曜日に追加" aria-label="${day.label}曜日に追加">＋</button>
-          </div>
-          <div class="day-stack"></div>
-        `;
-
-        const dayItems = filtered.filter(item => item.weekday === day.id);
-        const stack = column.querySelector(".day-stack");
-        column.querySelector(".day-add").addEventListener("click", () => {
-          openAssignmentForm(day.id);
-        });
-
-        if (!dayItems.length) {
-          stack.innerHTML = `<div class="day-empty">講義なし</div>`;
-        }
-
-        dayItems.forEach(item => {
-          const article = document.createElement("article");
-          article.className = `assignment lecture-card ${getStatus(item)}`;
-          article.innerHTML = `
-            <input class="check" type="checkbox" ${item.done ? "checked" : ""} aria-label="完了にする">
-            <div class="main">
-              <div class="title-line">
-                <span class="name"></span>
-              </div>
-              <span class="task-name"></span>
-              <div class="meta">
-                <span class="pill"></span>
-                <span class="pill"></span>
-                <span class="pill"></span>
-              </div>
-            </div>
-            <button class="delete" type="button" aria-label="削除">×</button>
-            <div class="due"></div>
-          `;
-
-          article.querySelector(".name").textContent = item.lecture || "未設定の講義";
-          article.querySelector(".task-name").textContent = item.title || "今週の課題";
-          const pills = article.querySelectorAll(".pill");
-          pills[0].textContent = formatDue(item.due);
-          pills[1].textContent = item.alertMode === "repeat" ? REPEAT_CYCLES[item.repeatCycle].label : getAlertMethodLabel(item);
-          pills[2].textContent = getNextAlertLabel(item);
-          article.querySelector(".due").textContent = getRemainingLabel(item);
-
-          article.querySelector(".check").addEventListener("change", event => {
-            item.done = event.target.checked;
-            item.notified = false;
-            item.lastNotifiedAt = null;
-            saveAssignments();
-            render();
-          });
-
-          article.querySelector(".delete").addEventListener("click", () => {
-            state.assignments = state.assignments.filter(candidate => candidate.id !== item.id);
-            saveAssignments();
-            render();
-          });
-
-          stack.append(article);
-        });
-
-        elements.list.append(column);
-      });
-    }
-
-    function render() {
-      renderDate();
-      renderLectureOptions();
-      updateAlertFields();
-      renderSyncPanel();
-      renderSummary();
-      renderList();
-      elements.form.classList.toggle("is-hidden", !state.formOpen);
-      document.querySelectorAll("[data-filter]").forEach(button => {
-        button.classList.toggle("active", button.dataset.filter === state.filter);
-      });
-      elements.notify.textContent = ("Notification" in window && Notification.permission === "granted") ? "通知オン" : "通知を許可";
-    }
-
-    function shouldNotify(item) {
-      if (item.done || item.alertMode === "off") return false;
-      const current = now();
-
-      if (item.alertMode === "specific") {
-        if (!item.alertAt || item.notified) return false;
-        return current >= new Date(item.alertAt);
-      }
-
-      const cycle = REPEAT_CYCLES[item.repeatCycle] || REPEAT_CYCLES.daily7;
-      if (item.repeatCycle === "off") return false;
-      const due = new Date(item.due);
-      const hoursUntilDue = (due - current) / 36e5;
-      if (hoursUntilDue < 0 || hoursUntilDue > cycle.startHours) return false;
-      if (!item.lastNotifiedAt) return true;
-      const elapsedMinutes = (current - new Date(item.lastNotifiedAt)) / 60000;
-      return elapsedMinutes >= cycle.intervalMinutes;
-    }
-
-    function checkAlerts() {
-      if (!("Notification" in window) || Notification.permission !== "granted") return;
-      let changed = false;
-      state.assignments.forEach(item => {
-        if (!shouldNotify(item)) return;
-        const method = item.alertMode === "repeat" ? REPEAT_CYCLES[item.repeatCycle].label : "指定日時";
-        new Notification("課題の締切が近いです", {
-          body: `${item.title}：${getRemainingLabel(item)} (${formatDue(item.due)}) / ${method}`
-        });
-        item.notified = true;
-        item.lastNotifiedAt = now().toISOString();
-        changed = true;
-      });
-      if (changed) {
-        saveAssignments();
-        render();
-      }
-    }
-
-    function getSelectedLecture() {
-      if (elements.lecture.value === ADD_LECTURE_VALUE) return addLecture(elements.newLecture.value);
-      return elements.lecture.value;
-    }
-
-    function openAssignmentForm(weekday = elements.weekday.value) {
-      state.formOpen = true;
-      render();
-      elements.weekday.value = weekday;
-      elements.title.focus();
-    }
-
-    function setSyncStatus(message) {
-      elements.syncStatus.textContent = message;
-    }
-
-    function getSyncConfig() {
-      saveSyncConfig();
-      if (!state.sync.url || !state.sync.key || !state.sync.id) {
-        throw new Error("Supabase URL、anon key、同期IDを入力してください。");
-      }
-      return state.sync;
-    }
-
-    function getSyncHeaders(config) {
-      return {
-        apikey: config.key,
-        authorization: `Bearer ${config.key}`,
-        "content-type": "application/json"
-      };
-    }
-
-    function buildSyncPayload() {
-      return {
-        lectures: state.lectures,
-        assignments: state.assignments,
-        savedAt: new Date().toISOString()
-      };
-    }
-
-    function applySyncPayload(payload) {
-      if (!payload || !Array.isArray(payload.assignments)) {
-        throw new Error("同期データの形式が正しくありません。");
-      }
-      state.assignments = payload.assignments.map(normalizeAssignment).filter(item => item.due);
-      state.lectures = uniqueLectures([
-        ...(Array.isArray(payload.lectures) ? payload.lectures : []),
-        ...state.assignments.map(item => item.lecture).filter(Boolean)
-      ]);
-      saveAssignments();
-      saveLectures();
-      render();
-    }
-
-    async function pushSync() {
-      const config = getSyncConfig();
-      setSyncStatus("クラウドへ送信中...");
-      const response = await fetch(`${config.url}/rest/v1/assignment_sync?on_conflict=id`, {
-        method: "POST",
-        headers: {
-          ...getSyncHeaders(config),
-          prefer: "resolution=merge-duplicates,return=minimal"
-        },
-        body: JSON.stringify({
-          id: config.id,
-          data: buildSyncPayload(),
-          updated_at: new Date().toISOString()
-        })
-      });
-      if (!response.ok) throw new Error(await response.text());
-      setSyncStatus(`送信しました: ${new Date().toLocaleString("ja-JP")}`);
-    }
-
-    async function pullSync() {
-      const config = getSyncConfig();
-      setSyncStatus("クラウドから受信中...");
-      const response = await fetch(`${config.url}/rest/v1/assignment_sync?id=eq.${encodeURIComponent(config.id)}&select=data,updated_at`, {
-        headers: getSyncHeaders(config)
-      });
-      if (!response.ok) throw new Error(await response.text());
-      const rows = await response.json();
-      if (!rows.length) {
-        setSyncStatus("クラウド上にデータがありません。先にこの端末から送信してください。");
-        return;
-      }
-      applySyncPayload(rows[0].data);
-      setSyncStatus(`受信しました: ${new Date(rows[0].updated_at).toLocaleString("ja-JP")}`);
-    }
-
-    elements.form.addEventListener("submit", event => {
-      event.preventDefault();
-      const lecture = getSelectedLecture();
-      if (!lecture) return;
-      state.assignments.push(normalizeAssignment({
-        title: elements.title.value.trim(),
-        lecture,
-        weekday: elements.weekday.value,
-        due: elements.due.value,
-        priority: elements.priority.value,
-        alertMode: elements.alertMode.value,
-        alertAt: elements.specificAlert.value,
-        repeatCycle: elements.repeat.value,
-        done: false
-      }));
-      saveAssignments();
-      elements.form.reset();
-      state.formOpen = false;
-      render();
-    });
-
-    document.querySelectorAll("[data-filter]").forEach(button => {
-      button.addEventListener("click", () => {
-        state.filter = button.dataset.filter;
-        render();
-      });
-    });
-
-    elements.lecture.addEventListener("change", updateLectureInput);
-    elements.lecture.addEventListener("input", updateLectureInput);
-    elements.closeForm.addEventListener("click", () => {
-      state.formOpen = false;
-      render();
-    });
-    elements.syncToggle.addEventListener("click", () => {
-      state.syncOpen = true;
-      render();
-      elements.syncUrl.focus();
-    });
-    elements.closeSync.addEventListener("click", () => {
-      state.syncOpen = false;
-      render();
-    });
-    elements.saveSync.addEventListener("click", () => {
-      saveSyncConfig();
-      render();
-      setSyncStatus("同期設定を保存しました。別端末にも同じ設定を入れてください。");
-    });
-    elements.pushSync.addEventListener("click", async () => {
-      try {
-        await pushSync();
-      } catch (error) {
-        setSyncStatus(`送信できませんでした: ${error.message}`);
-      }
-    });
-    elements.pullSync.addEventListener("click", async () => {
-      try {
-        await pullSync();
-      } catch (error) {
-        setSyncStatus(`受信できませんでした: ${error.message}`);
-      }
-    });
-    elements.saveLecture.addEventListener("click", () => {
-      addLecture(elements.newLecture.value);
-      elements.newLecture.value = "";
-    });
-    elements.due.addEventListener("change", () => {
-      if (elements.alertMode.value === "specific") {
-        elements.specificAlert.value = toInputDate(new Date(new Date(elements.due.value).getTime() - 24 * 36e5));
-      }
-    });
-    elements.alertMode.addEventListener("change", updateAlertFields);
-
-    elements.notify.addEventListener("click", async () => {
-      if (!("Notification" in window)) {
-        alert("このブラウザは通知に対応していません。");
-        return;
-      }
-      if (Notification.permission !== "granted") {
-        await Notification.requestPermission();
-      }
-      render();
-      checkAlerts();
-    });
-
-    elements.exportButton.addEventListener("click", () => {
-      const data = {
-        lectures: state.lectures,
-        assignments: state.assignments
-      };
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "assignments.json";
-      link.click();
-      URL.revokeObjectURL(url);
-    });
-
-    elements.importInput.addEventListener("change", async event => {
-      const file = event.target.files[0];
-      if (!file) return;
-      const imported = JSON.parse(await file.text());
-      const assignments = Array.isArray(imported) ? imported : imported.assignments;
-      if (!Array.isArray(assignments)) return;
-      state.assignments = assignments.map(normalizeAssignment).filter(item => item.due);
-      state.lectures = uniqueLectures([
-        ...(Array.isArray(imported.lectures) ? imported.lectures : []),
-        ...state.lectures,
-        ...state.assignments.map(item => item.lecture).filter(Boolean)
-      ]);
-      saveAssignments();
-      saveLectures();
-      render();
-      event.target.value = "";
-    });
-
+  function setDone(masterId, week, done) {
+    const key = completionKey(masterId, week);
+    if (done) state.completions[key] = true;
+    else delete state.completions[key];
+    saveCompletions();
     render();
-    checkAlerts();
-    setInterval(() => {
-      render();
-      checkAlerts();
-    }, CHECK_INTERVAL_MS);
-  </script>
+  }
+
+  function dayLabel(id, long = false) {
+    const day = WEEKDAYS.find(candidate => candidate.id === id);
+    return day ? (long ? day.long : day.label) : "月";
+  }
+
+  function formatDateLabel(dateText) {
+    const date = new Date(`${dateText}T00:00:00`);
+    return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+  }
+
+  function setTheme(theme) {
+    const safeTheme = theme === "dark" ? "dark" : "light";
+    document.documentElement.dataset.theme = safeTheme;
+    state.settings.theme = safeTheme;
+    els.themeBtn.textContent = safeTheme === "dark" ? "☀️ ライト" : "🌙 ダーク";
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(state.settings));
+  }
+
+  function renderHeader() {
+    const date = new Date();
+    const week = getWeekNumber();
+    els.monthLabel.textContent = `${date.getMonth() + 1}月`;
+    els.dayLabel.textContent = date.getDate();
+    els.semesterLabel.textContent = `学期開始日：${formatDateLabel(state.settings.semesterStart)}　／　現在：第${week}週`;
+    els.weekMetric.textContent = `第${week}回`;
+  }
+
+  function renderMasterTable() {
+    els.masterBody.innerHTML = "";
+    const sorted = [...state.masters].sort((a, b) => WEEKDAYS.findIndex(day => day.id === a.weekday) - WEEKDAYS.findIndex(day => day.id === b.weekday));
+    sorted.forEach(master => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td><span class="day-b"></span></td>
+        <td><button class="lec-btn" type="button"></button></td>
+        <td><button class="icon-btn" type="button">✕</button></td>
+      `;
+      row.querySelector(".day-b").textContent = dayLabel(master.weekday);
+      row.querySelector(".lec-btn").textContent = master.lecture;
+      row.querySelector(".lec-btn").addEventListener("click", () => openMasterPopup(master.id));
+      row.querySelector(".icon-btn").addEventListener("click", () => {
+        state.masters = state.masters.filter(item => item.id !== master.id);
+        Object.keys(state.completions).forEach(key => {
+          if (key.startsWith(`${master.id}:`)) delete state.completions[key];
+        });
+        saveMasters();
+        saveCompletions();
+        render();
+      });
+      els.masterBody.append(row);
+    });
+  }
+
+  function renderTaskCard(master, week, carryover = false) {
+    const done = isDone(master.id, week);
+    const card = document.createElement("div");
+    card.className = `task-card ${carryover ? "co" : ""} ${done ? "done" : ""}`;
+    card.innerHTML = `
+      <div class="task-info">
+        <p class="ln"></p>
+        <p class="lm"></p>
+      </div>
+      <input type="checkbox">
+    `;
+    card.querySelector(".ln").textContent = master.lecture;
+    card.querySelector(".ln").classList.toggle("done-text", done);
+    card.querySelector(".lm").textContent = `${dayLabel(master.weekday, true)}　${master.taskName}`;
+    card.querySelector("input").checked = done;
+    card.querySelector("input").addEventListener("change", event => setDone(master.id, week, event.target.checked));
+    return card;
+  }
+
+  function renderStack() {
+    const week = getWeekNumber();
+    const previousWeek = Math.max(1, week - 1);
+    const carryovers = week > 1 ? state.masters.filter(master => !isDone(master.id, previousWeek)) : [];
+    const doneThisWeek = state.masters.filter(master => isDone(master.id, week)).length;
+
+    els.thisWeekMetric.textContent = state.masters.length;
+    els.carryMetric.textContent = carryovers.length;
+    els.doneMetric.textContent = doneThisWeek;
+    els.stackCard.innerHTML = "";
+
+    if (carryovers.length) {
+      const section = document.createElement("div");
+      section.className = "stack-section carryover";
+      section.innerHTML = `<p class="sec-label danger">繰り越し（第${previousWeek}回・未完了）</p><div class="task-cards"></div>`;
+      carryovers.forEach(master => section.querySelector(".task-cards").append(renderTaskCard(master, previousWeek, true)));
+      els.stackCard.append(section);
+    }
+
+    const section = document.createElement("div");
+    section.className = "stack-section";
+    section.innerHTML = `<p class="sec-label">第${week}回　今週</p><div class="task-cards"></div>`;
+    const cards = section.querySelector(".task-cards");
+    if (!state.masters.length) {
+      cards.innerHTML = `<p class="empty">毎週の課題マスタを追加してください。</p>`;
+    } else {
+      state.masters.forEach(master => cards.append(renderTaskCard(master, week)));
+    }
+    els.stackCard.append(section);
+  }
+
+  function render() {
+    renderHeader();
+    renderMasterTable();
+    renderStack();
+    els.syncToggle.textContent = state.sync.id ? "同期" : "同期設定";
+  }
+
+  function openMasterPopup(id = null) {
+    const master = id ? state.masters.find(item => item.id === id) : normalizeMaster({});
+    state.editingMasterId = id;
+    els.masterPopupTitle.textContent = id ? master.lecture : "新しい講義";
+    els.masterWeekdayField.style.display = id ? "none" : "block";
+    els.masterLectureField.style.display = id ? "none" : "block";
+    els.masterWeekday.value = master.weekday;
+    els.masterLecture.value = master.lecture;
+    els.masterTask.value = master.taskName;
+    els.masterMemo.value = master.memo;
+    els.masterNote.value = master.note;
+    els.masterUrl.value = master.url;
+    updateUrlOpen();
+    els.masterPopup.style.display = "flex";
+  }
+
+  function closeMasterPopup() {
+    els.masterPopup.style.display = "none";
+    state.editingMasterId = null;
+  }
+
+  function updateUrlOpen() {
+    const url = els.masterUrl.value.trim();
+    els.masterUrlOpen.href = url || "#";
+    els.masterUrlOpen.style.pointerEvents = url ? "auto" : "none";
+    els.masterUrlOpen.style.opacity = url ? "1" : ".45";
+  }
+
+  function saveMasterFromPopup() {
+    const current = state.editingMasterId ? state.masters.find(item => item.id === state.editingMasterId) : null;
+    const next = normalizeMaster({
+      id: state.editingMasterId,
+      weekday: current ? current.weekday : els.masterWeekday.value,
+      lecture: current ? current.lecture : (els.masterLecture.value.trim() || "新しい講義"),
+      taskName: els.masterTask.value.trim() || "今週の課題",
+      memo: els.masterMemo.value,
+      note: els.masterNote.value,
+      url: els.masterUrl.value.trim()
+    });
+    if (state.editingMasterId) {
+      state.masters = state.masters.map(item => item.id === state.editingMasterId ? next : item);
+    } else {
+      state.masters.push(next);
+    }
+    saveMasters();
+    closeMasterPopup();
+    render();
+  }
+
+  function openSyncPanel() {
+    els.syncUrl.value = state.sync.url || "";
+    els.syncKey.value = state.sync.key || "";
+    els.syncId.value = state.sync.id || "";
+    els.syncPanel.style.display = "flex";
+  }
+
+  function closeSyncPanel() {
+    els.syncPanel.style.display = "none";
+  }
+
+  function setSyncStatus(message) {
+    els.syncStatus.textContent = message;
+  }
+
+  function hasSyncConfig() {
+    return Boolean(state.sync.url && state.sync.key && state.sync.id);
+  }
+
+  function getSyncConfig() {
+    saveSyncConfig();
+    if (!hasSyncConfig()) throw new Error("Supabase URL、publishable key、同期IDを入力してください。");
+    return state.sync;
+  }
+
+  function getSyncHeaders(config) {
+    return {
+      apikey: config.key,
+      authorization: `Bearer ${config.key}`,
+      "content-type": "application/json"
+    };
+  }
+
+  function buildSyncPayload() {
+    return {
+      masters: state.masters,
+      completions: state.completions,
+      settings: state.settings,
+      savedAt: new Date().toISOString()
+    };
+  }
+
+  function applySyncPayload(payload) {
+    if (!payload || !Array.isArray(payload.masters)) throw new Error("同期データの形式が正しくありません。");
+    state.syncApplying = true;
+    state.masters = payload.masters.map(normalizeMaster);
+    state.completions = payload.completions && typeof payload.completions === "object" ? payload.completions : {};
+    state.settings = { ...state.settings, ...(payload.settings || {}) };
+    localStorage.setItem(MASTER_KEY, JSON.stringify(state.masters));
+    localStorage.setItem(COMPLETION_KEY, JSON.stringify(state.completions));
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(state.settings));
+    state.syncApplying = false;
+    setTheme(state.settings.theme);
+    render();
+  }
+
+  function scheduleAutoPush() {
+    if (state.syncApplying || !hasSyncConfig()) return;
+    window.clearTimeout(state.autoSyncTimer);
+    state.autoSyncTimer = window.setTimeout(async () => {
+      try {
+        await pushSync(true);
+      } catch (error) {
+        if (els.syncPanel.style.display !== "none") setSyncStatus(`自動送信できませんでした: ${error.message}`);
+      }
+    }, AUTO_SYNC_DELAY_MS);
+  }
+
+  async function pushSync(isAuto = false) {
+    const config = getSyncConfig();
+    if (!isAuto) setSyncStatus("クラウドへ送信中...");
+    const response = await fetch(`${config.url}/rest/v1/assignment_sync?on_conflict=id`, {
+      method: "POST",
+      headers: { ...getSyncHeaders(config), prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify({ id: config.id, data: buildSyncPayload(), updated_at: new Date().toISOString() })
+    });
+    if (!response.ok) throw new Error(await response.text());
+    if (els.syncPanel.style.display !== "none") setSyncStatus(`${isAuto ? "自動送信" : "送信"}しました: ${new Date().toLocaleString("ja-JP")}`);
+  }
+
+  async function pullSync(isAuto = false) {
+    if (!hasSyncConfig()) return;
+    const config = getSyncConfig();
+    if (!isAuto) setSyncStatus("クラウドから受信中...");
+    const response = await fetch(`${config.url}/rest/v1/assignment_sync?id=eq.${encodeURIComponent(config.id)}&select=data,updated_at`, {
+      headers: getSyncHeaders(config)
+    });
+    if (!response.ok) throw new Error(await response.text());
+    const rows = await response.json();
+    if (!rows.length) {
+      if (!isAuto) setSyncStatus("クラウド上にデータがありません。先にこの端末から送信してください。");
+      return;
+    }
+    applySyncPayload(rows[0].data);
+    if (els.syncPanel.style.display !== "none") setSyncStatus(`${isAuto ? "自動受信" : "受信"}しました: ${new Date(rows[0].updated_at).toLocaleString("ja-JP")}`);
+  }
+
+  els.themeBtn.addEventListener("click", () => {
+    setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+    saveSettings();
+  });
+
+  els.semesterBtn.addEventListener("click", () => {
+    const value = prompt("学期開始日を YYYY-MM-DD で入力してください。", state.settings.semesterStart);
+    if (!value) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return;
+    state.settings.semesterStart = value;
+    saveSettings();
+    render();
+  });
+
+  els.addMaster.addEventListener("click", () => openMasterPopup());
+  els.closeMasterPopup.addEventListener("click", closeMasterPopup);
+  els.cancelMaster.addEventListener("click", closeMasterPopup);
+  els.saveMaster.addEventListener("click", saveMasterFromPopup);
+  els.masterUrl.addEventListener("input", updateUrlOpen);
+  els.masterPopup.addEventListener("click", event => {
+    if (event.target === els.masterPopup) closeMasterPopup();
+  });
+
+  els.syncToggle.addEventListener("click", openSyncPanel);
+  els.closeSync.addEventListener("click", closeSyncPanel);
+  els.syncPanel.addEventListener("click", event => {
+    if (event.target === els.syncPanel) closeSyncPanel();
+  });
+  els.saveSync.addEventListener("click", () => {
+    saveSyncConfig();
+    setSyncStatus("同期設定を保存しました。変更時は自動送信、30秒ごとに自動受信します。");
+    scheduleAutoPush();
+    render();
+  });
+  els.pushSync.addEventListener("click", async () => {
+    try { await pushSync(); } catch (error) { setSyncStatus(`送信できませんでした: ${error.message}`); }
+  });
+  els.pullSync.addEventListener("click", async () => {
+    try { await pullSync(); } catch (error) { setSyncStatus(`受信できませんでした: ${error.message}`); }
+  });
+
+  els.exportButton.addEventListener("click", () => {
+    const blob = new Blob([JSON.stringify(buildSyncPayload(), null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "assignments.json";
+    link.click();
+    URL.revokeObjectURL(url);
+  });
+
+  els.importInput.addEventListener("change", async event => {
+    const file = event.target.files[0];
+    if (!file) return;
+    applySyncPayload(JSON.parse(await file.text()));
+    event.target.value = "";
+  });
+
+  setTheme(state.settings.theme);
+  render();
+  setInterval(render, CHECK_INTERVAL_MS);
+  setInterval(() => {
+    pullSync(true).catch(error => {
+      if (els.syncPanel.style.display !== "none") setSyncStatus(`自動受信できませんでした: ${error.message}`);
+    });
+  }, AUTO_PULL_INTERVAL_MS);
+</script>
 </body>
 </html>
