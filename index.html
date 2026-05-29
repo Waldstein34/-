@@ -380,7 +380,7 @@
 
   .settings-tabs {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 4px;
     padding: 0 16px 12px;
     border-bottom: 1px solid var(--line);
@@ -412,6 +412,44 @@
     font-size: .68rem;
     line-height: 1.45;
   }
+
+  .detail-section {
+    margin-bottom: 14px;
+  }
+
+  .detail-section h3 {
+    color: var(--ink);
+    font-size: .78rem;
+    margin-bottom: 5px;
+  }
+
+  .legend-list {
+    display: grid;
+    gap: 7px;
+  }
+
+  .legend-row {
+    display: grid;
+    grid-template-columns: 92px 1fr;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .legend-sample {
+    min-height: 24px;
+    padding: 3px 8px;
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--line);
+    border-radius: 7px;
+    font-size: .68rem;
+    font-weight: 700;
+    color: var(--ink);
+    background: var(--task-card-bg);
+  }
+
+  .legend-sample.once { background: var(--info-soft); }
+  .legend-sample.carry { background: var(--danger-soft); border-color: var(--danger-border); }
+  .legend-sample.done { opacity: .45; text-decoration: line-through; }
 
   .status-badge {
     display: inline-flex;
@@ -491,9 +529,10 @@
   .carry-main span, .carry-day { color: var(--muted); font-size: .72rem; white-space: nowrap; }
 
   .week-calendar {
-    height: 360px;
-    display: grid;
-    grid-template-rows: repeat(6, minmax(0, 1fr));
+    height: calc(100vh - 250px);
+    min-height: 360px;
+    display: flex;
+    flex-direction: column;
   }
 
   .calendar-row {
@@ -501,6 +540,8 @@
     grid-template-columns: 36px minmax(0, 1fr);
     border-top: 1px solid var(--line);
     min-height: 0;
+    flex: 1;
+    overflow: hidden;
   }
 
   .calendar-row:first-child { border-top: none; }
@@ -522,10 +563,11 @@
 
   .chip-lane {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
     gap: 6px;
     min-width: 0;
-    overflow-x: auto;
+    overflow: hidden;
     padding: 7px 8px;
   }
 
@@ -540,9 +582,10 @@
     align-items: center;
     gap: 7px;
     min-width: 0;
-    max-width: 240px;
-    min-height: 34px;
-    padding: 5px 9px 5px 8px;
+    width: 100%;
+    max-width: none;
+    min-height: 28px;
+    padding: 4px 8px;
     border: 1px solid var(--line);
     border-left: 4px solid var(--line);
     border-radius: 8px;
@@ -807,6 +850,7 @@
       <button class="settings-tab active" type="button" data-settings-tab="semester">学期</button>
       <button class="settings-tab" type="button" data-settings-tab="sync">同期</button>
       <button class="settings-tab" type="button" data-settings-tab="notify">通知</button>
+      <button class="settings-tab" type="button" data-settings-tab="detail">詳細</button>
     </div>
     <div class="settings-content">
       <section class="settings-panel" data-settings-panel="semester">
@@ -853,6 +897,33 @@
           <label>自動受信間隔（秒）</label>
           <input id="autoPullIntervalInput" type="number" min="5" step="1" value="30">
           <p class="help">Supabaseから他端末の変更を受信する間隔です。デフォルトは30秒です。</p>
+        </div>
+      </section>
+      <section class="settings-panel" data-settings-panel="detail" hidden>
+        <div class="detail-section">
+          <h3>左端ラインの色</h3>
+          <p class="help">ユーザーが講義ごとに設定した識別色です。どの講義の課題かを一目で区別するために使います。</p>
+        </div>
+        <div class="detail-section">
+          <h3>チップの背景色</h3>
+          <div class="legend-list">
+            <div class="legend-row">
+              <span class="legend-sample">定期</span>
+              <p class="help">グレー背景 → 通常の定期課題</p>
+            </div>
+            <div class="legend-row">
+              <span class="legend-sample once">単発</span>
+              <p class="help">青背景 → 一回限りの課題</p>
+            </div>
+            <div class="legend-row">
+              <span class="legend-sample carry">繰越</span>
+              <p class="help">赤背景 → 繰り越し未完了の課題</p>
+            </div>
+            <div class="legend-row">
+              <span class="legend-sample done">完了</span>
+              <p class="help">薄い表示・打ち消し線 → 完了済みの課題</p>
+            </div>
+          </div>
         </div>
       </section>
     </div>
