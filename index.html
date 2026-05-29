@@ -490,6 +490,147 @@
   .carry-main b { display: block; color: var(--ink); font-size: .78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .carry-main span, .carry-day { color: var(--muted); font-size: .72rem; white-space: nowrap; }
 
+  .week-calendar {
+    height: 360px;
+    display: grid;
+    grid-template-rows: repeat(6, minmax(0, 1fr));
+  }
+
+  .calendar-row {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr);
+    border-top: 1px solid var(--line);
+    min-height: 0;
+  }
+
+  .calendar-row:first-child { border-top: none; }
+
+  .day-label {
+    display: grid;
+    place-items: center;
+    background: var(--panel-3);
+    color: var(--muted);
+    font-size: .72rem;
+    font-weight: 700;
+    border-right: 1px solid var(--line);
+  }
+
+  .day-label.today {
+    background: var(--focus);
+    color: #fff;
+  }
+
+  .chip-lane {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    overflow-x: auto;
+    padding: 7px 8px;
+  }
+
+  .no-task {
+    color: var(--muted);
+    opacity: .62;
+    font-size: .72rem;
+  }
+
+  .task-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    max-width: 240px;
+    min-height: 34px;
+    padding: 5px 9px 5px 8px;
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--line);
+    border-radius: 8px;
+    background: var(--task-card-bg);
+    color: var(--ink);
+    flex: 0 0 auto;
+  }
+
+  .task-chip.once {
+    background: var(--info-soft);
+  }
+
+  .task-chip.carry {
+    background: var(--danger-soft);
+    border-color: var(--danger-border);
+  }
+
+  .task-chip.done {
+    opacity: .45;
+  }
+
+  .task-chip.done .chip-main {
+    text-decoration: line-through;
+  }
+
+  .chip-text {
+    min-width: 0;
+  }
+
+  .chip-main {
+    display: block;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: .76rem;
+    font-weight: 700;
+  }
+
+  .chip-sub {
+    display: block;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--muted);
+    font-size: .68rem;
+    margin-top: 1px;
+  }
+
+  .task-chip input[type=checkbox] {
+    width: 15px;
+    height: 15px;
+  }
+
+  .swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .swatch {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--panel);
+    border-radius: 999px;
+    box-shadow: 0 0 0 1px var(--line);
+    cursor: pointer;
+  }
+
+  .swatch.selected {
+    box-shadow: 0 0 0 3px var(--focus);
+  }
+
+  .swatch.custom {
+    background: conic-gradient(#e05a52, #e0b840, #3ab870, #4a9ee0, #8a9099, #e05a52);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .swatch.custom input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
   .empty {
     color: var(--muted);
     font-size: .72rem;
@@ -617,9 +758,41 @@
         <a id="masterUrlOpen" href="#" target="_blank" rel="noopener" class="url-link">開く</a>
       </div>
     </div>
+    <div class="field">
+      <label>タスクカラー</label>
+      <div class="swatches" id="masterColorSwatches"></div>
+    </div>
     <div class="popup-footer">
       <button class="btn" id="cancelMasterBtn">キャンセル</button>
       <button class="btn-primary" id="saveMasterBtn">保存</button>
+    </div>
+  </div>
+</div>
+
+<div id="oneTimePopup" class="popup-overlay" style="display:none;">
+  <div class="popup">
+    <div class="popup-head">
+      <p>一回限りの課題追加</p>
+      <button class="popup-close" id="closeOneTimePopup">✕</button>
+    </div>
+    <div class="field">
+      <label>タイトル</label>
+      <input id="oneTimeTitleInput" type="text" placeholder="課題タイトル">
+    </div>
+    <div class="field">
+      <label>日時</label>
+      <div class="url-row">
+        <input id="oneTimeDateInput" type="date">
+        <input id="oneTimeTimeInput" type="time">
+      </div>
+    </div>
+    <div class="field">
+      <label>カラー選択</label>
+      <div class="swatches" id="oneTimeColorSwatches"></div>
+    </div>
+    <div class="popup-footer">
+      <button class="btn" id="cancelOneTimeBtn">キャンセル</button>
+      <button class="btn-primary" id="saveOneTimeBtn">登録</button>
     </div>
   </div>
 </div>
@@ -692,6 +865,7 @@
 
 <script>
   const MASTER_KEY = "university-assignment-master-v2";
+  const ONE_TIME_KEY = "university-assignment-onetime-v1";
   const COMPLETION_KEY = "university-assignment-completions-v2";
   const SETTINGS_KEY = "university-assignment-settings-v2";
   const SYNC_KEY = "university-assignment-sync-v1";
@@ -706,13 +880,24 @@
     { id: "fri", label: "金", long: "金曜" },
     { id: "sat", label: "土", long: "土曜" }
   ];
+  const COLOR_OPTIONS = [
+    { name: "赤", value: "#e05a52" },
+    { name: "青", value: "#4a9ee0" },
+    { name: "黄", value: "#e0b840" },
+    { name: "緑", value: "#3ab870" },
+    { name: "グレー", value: "#8a9099" }
+  ];
+  const DEFAULT_TASK_COLOR = "#d8dedb";
 
   const state = {
     masters: loadMasters(),
+    oneTimes: loadOneTimes(),
     completions: loadCompletions(),
     settings: loadSettings(),
     sync: loadSyncConfig(),
     editingMasterId: null,
+    masterColor: DEFAULT_TASK_COLOR,
+    oneTimeColor: DEFAULT_TASK_COLOR,
     syncApplying: false,
     autoSyncTimer: null,
     renderTimer: null,
@@ -747,6 +932,15 @@
     masterNote: document.querySelector("#masterNoteInput"),
     masterUrl: document.querySelector("#masterUrlInput"),
     masterUrlOpen: document.querySelector("#masterUrlOpen"),
+    masterColorSwatches: document.querySelector("#masterColorSwatches"),
+    oneTimePopup: document.querySelector("#oneTimePopup"),
+    closeOneTimePopup: document.querySelector("#closeOneTimePopup"),
+    cancelOneTime: document.querySelector("#cancelOneTimeBtn"),
+    saveOneTime: document.querySelector("#saveOneTimeBtn"),
+    oneTimeTitle: document.querySelector("#oneTimeTitleInput"),
+    oneTimeDate: document.querySelector("#oneTimeDateInput"),
+    oneTimeTime: document.querySelector("#oneTimeTimeInput"),
+    oneTimeColorSwatches: document.querySelector("#oneTimeColorSwatches"),
     settingsPopup: document.querySelector("#settingsPopup"),
     closeSettings: document.querySelector("#closeSettingsButton"),
     cancelSettings: document.querySelector("#cancelSettingsButton"),
@@ -814,6 +1008,17 @@
     ];
   }
 
+  function loadOneTimes() {
+    const saved = localStorage.getItem(ONE_TIME_KEY);
+    if (!saved) return [];
+    try {
+      return JSON.parse(saved).map(normalizeOneTime);
+    } catch {
+      localStorage.removeItem(ONE_TIME_KEY);
+      return [];
+    }
+  }
+
   function loadCompletions() {
     try {
       return JSON.parse(localStorage.getItem(COMPLETION_KEY) || "{}");
@@ -838,12 +1043,28 @@
       taskName: String(item.taskName || item.title || "今週の課題"),
       memo: String(item.memo || ""),
       note: String(item.note || ""),
-      url: String(item.url || item.referenceUrl || "")
+      url: String(item.url || item.referenceUrl || ""),
+      color: String(item.color || DEFAULT_TASK_COLOR)
+    };
+  }
+
+  function normalizeOneTime(item) {
+    return {
+      id: item.id || makeId(),
+      title: String(item.title || "一回限りの課題"),
+      date: item.date || new Date().toISOString().slice(0, 10),
+      time: item.time || "09:00",
+      color: String(item.color || DEFAULT_TASK_COLOR)
     };
   }
 
   function saveMasters() {
     localStorage.setItem(MASTER_KEY, JSON.stringify(state.masters));
+    scheduleAutoPush();
+  }
+
+  function saveOneTimes() {
+    localStorage.setItem(ONE_TIME_KEY, JSON.stringify(state.oneTimes));
     scheduleAutoPush();
   }
 
@@ -899,8 +1120,41 @@
     return Math.max(1, Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1 + offset);
   }
 
+  function addDays(date, days) {
+    const next = new Date(date);
+    next.setDate(next.getDate() + days);
+    return next;
+  }
+
+  function toDateInput(date) {
+    const pad = value => String(value).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  }
+
+  function getWeekStart() {
+    const start = new Date(`${state.settings.semesterStart}T00:00:00`);
+    return addDays(start, (getWeekNumber() - 1) * 7);
+  }
+
+  function getWeekDates() {
+    const start = getWeekStart();
+    return WEEKDAYS.map((day, index) => ({ ...day, date: addDays(start, index) }));
+  }
+
+  function formatMonthDay(date) {
+    return `${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")}`;
+  }
+
+  function isSameDate(a, b) {
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  }
+
   function completionKey(masterId, week) {
     return `${masterId}:${week}`;
+  }
+
+  function oneTimeCompletionKey(id) {
+    return `once:${id}`;
   }
 
   function isDone(masterId, week) {
@@ -909,6 +1163,14 @@
 
   function setDone(masterId, week, done) {
     const key = completionKey(masterId, week);
+    if (done) state.completions[key] = true;
+    else delete state.completions[key];
+    saveCompletions();
+    render();
+  }
+
+  function setOneTimeDone(id, done) {
+    const key = oneTimeCompletionKey(id);
     if (done) state.completions[key] = true;
     else delete state.completions[key];
     saveCompletions();
@@ -969,76 +1231,105 @@
     });
   }
 
-  function renderTaskCard(master, week, carryover = false) {
-    const done = isDone(master.id, week);
-    const card = document.createElement("div");
-    card.className = `task-card ${carryover ? "co" : ""} ${done ? "done" : ""}`;
-    card.innerHTML = `
-      <div class="task-info">
-        <p class="ln"></p>
-        <p class="lm"></p>
-      </div>
-      <input type="checkbox">
-    `;
-    card.querySelector(".ln").textContent = master.lecture;
-    card.querySelector(".ln").classList.toggle("done-text", done);
-    card.querySelector(".lm").textContent = `${dayLabel(master.weekday, true)}　${master.taskName}`;
-    card.querySelector("input").checked = done;
-    card.querySelector("input").addEventListener("change", event => setDone(master.id, week, event.target.checked));
-    return card;
-  }
-
   function renderStack() {
     const week = getWeekNumber();
     const previousWeek = Math.max(1, week - 1);
     const carryovers = week > 1 ? state.masters.filter(master => !isDone(master.id, previousWeek)) : [];
     const doneThisWeek = state.masters.filter(master => isDone(master.id, week)).length;
+    const weekDates = getWeekDates();
+    const currentWeekDateKeys = new Set(weekDates.map(day => toDateInput(day.date)));
+    const oneTimesThisWeek = state.oneTimes.filter(task => currentWeekDateKeys.has(task.date));
+    const doneOneTimes = oneTimesThisWeek.filter(task => state.completions[oneTimeCompletionKey(task.id)]).length;
+    const weekStart = weekDates[0].date;
+    const weekEnd = weekDates[5].date;
 
-    els.thisWeekMetric.textContent = state.masters.length;
+    els.thisWeekMetric.textContent = state.masters.length + oneTimesThisWeek.length;
     els.carryMetric.textContent = carryovers.length;
-    els.doneMetric.textContent = doneThisWeek;
+    els.doneMetric.textContent = doneThisWeek + doneOneTimes;
     els.stackCard.innerHTML = "";
-    els.stackCard.classList.add("stack-title-card");
+    els.stackCard.classList.remove("stack-title-card");
     els.stackCard.innerHTML = `
-      <div class="card-header"><p>第${week}回　今週の課題</p></div>
+      <div class="card-header">
+        <p>第${week}回　${formatMonthDay(weekStart)}（月）〜 ${formatMonthDay(weekEnd)}（土）</p>
+        <button class="btn" id="addOneTimeBtn">+ 課題追加</button>
+      </div>
+      <div class="week-calendar"></div>
     `;
-
-    const section = document.createElement("div");
-    section.className = "stack-section";
-    section.innerHTML = `<div class="task-cards"></div>`;
-    const cards = section.querySelector(".task-cards");
-    if (!state.masters.length) {
-      cards.innerHTML = `<p class="empty">毎週の課題マスタを追加してください。</p>`;
-    } else {
-      state.masters.forEach(master => cards.append(renderTaskCard(master, week)));
-    }
-    els.stackCard.append(section);
-
-    if (carryovers.length) {
-      const banner = document.createElement("div");
-      banner.className = "carryover-banner";
-      banner.innerHTML = `
-        <div class="carryover-head"><span class="danger-dot"></span><span>繰り越し未完了</span></div>
+    els.stackCard.querySelector("#addOneTimeBtn").addEventListener("click", openOneTimePopup);
+    const calendar = els.stackCard.querySelector(".week-calendar");
+    weekDates.forEach(day => {
+      const row = document.createElement("div");
+      row.className = "calendar-row";
+      row.innerHTML = `
+        <div class="day-label">${day.label}</div>
+        <div class="chip-lane"></div>
       `;
-      carryovers.forEach(master => {
-        const done = isDone(master.id, previousWeek);
-        const row = document.createElement("div");
-        row.className = "carryover-row";
-        row.innerHTML = `
-          <span class="week-badge">第${previousWeek}回</span>
-          <div class="carry-main"><b></b><span></span></div>
-          <span class="carry-day"></span>
-          <input type="checkbox">
-        `;
-        row.querySelector("b").textContent = master.lecture;
-        row.querySelector(".carry-main span").textContent = master.taskName;
-        row.querySelector(".carry-day").textContent = dayLabel(master.weekday, true);
-        row.querySelector("input").checked = done;
-        row.querySelector("input").addEventListener("change", event => setDone(master.id, previousWeek, event.target.checked));
-        banner.append(row);
-      });
-      els.stackCard.append(banner);
-    }
+      row.querySelector(".day-label").classList.toggle("today", isSameDate(day.date, new Date()));
+      const lane = row.querySelector(".chip-lane");
+      const regulars = state.masters.filter(master => master.weekday === day.id);
+      const dayOneTimes = oneTimesThisWeek.filter(task => task.date === toDateInput(day.date));
+      const dayCarryovers = carryovers.filter(master => master.weekday === day.id);
+
+      regulars.forEach(master => lane.append(createMasterChip(master, week)));
+      dayOneTimes.forEach(task => lane.append(createOneTimeChip(task)));
+      dayCarryovers.forEach(master => lane.append(createCarryoverChip(master, previousWeek)));
+      if (!lane.children.length) lane.innerHTML = `<span class="no-task">課題なし</span>`;
+      calendar.append(row);
+    });
+  }
+
+  function createMasterChip(master, week) {
+    const done = isDone(master.id, week);
+    const chip = createChip({
+      type: "regular",
+      color: master.color,
+      main: master.lecture,
+      sub: master.taskName,
+      done
+    });
+    chip.querySelector("input").addEventListener("change", event => setDone(master.id, week, event.target.checked));
+    return chip;
+  }
+
+  function createOneTimeChip(task) {
+    const done = Boolean(state.completions[oneTimeCompletionKey(task.id)]);
+    const chip = createChip({
+      type: "once",
+      color: task.color,
+      main: task.title,
+      sub: task.time || "",
+      done
+    });
+    chip.querySelector("input").addEventListener("change", event => setOneTimeDone(task.id, event.target.checked));
+    return chip;
+  }
+
+  function createCarryoverChip(master, week) {
+    const chip = createChip({
+      type: "carry",
+      color: master.color,
+      main: master.lecture,
+      sub: master.taskName,
+      done: false,
+      badge: `第${week}回`
+    });
+    chip.querySelector("input").addEventListener("change", event => setDone(master.id, week, event.target.checked));
+    return chip;
+  }
+
+  function createChip({ type, color, main, sub, done, badge }) {
+    const chip = document.createElement("div");
+    chip.className = `task-chip ${type} ${done ? "done" : ""}`;
+    chip.style.borderLeftColor = color || DEFAULT_TASK_COLOR;
+    chip.innerHTML = `
+      ${badge ? `<span class="week-badge">${badge}</span>` : ""}
+      <span class="chip-text"><span class="chip-main"></span><span class="chip-sub"></span></span>
+      <input type="checkbox">
+    `;
+    chip.querySelector(".chip-main").textContent = main;
+    chip.querySelector(".chip-sub").textContent = sub;
+    chip.querySelector("input").checked = done;
+    return chip;
   }
 
   function render() {
@@ -1050,6 +1341,7 @@
   function openMasterPopup(id = null) {
     const master = id ? state.masters.find(item => item.id === id) : normalizeMaster({});
     state.editingMasterId = id;
+    state.masterColor = master.color || DEFAULT_TASK_COLOR;
     els.masterPopupTitle.textContent = id ? master.lecture : "新しい講義";
     els.masterWeekdayField.style.display = id ? "none" : "block";
     els.masterLectureField.style.display = id ? "none" : "block";
@@ -1060,6 +1352,7 @@
     els.masterNote.value = master.note;
     els.masterUrl.value = master.url;
     updateUrlOpen();
+    renderMasterSwatches();
     els.masterPopup.style.display = "flex";
   }
 
@@ -1075,6 +1368,39 @@
     els.masterUrlOpen.style.opacity = url ? "1" : ".45";
   }
 
+  function renderMasterSwatches() {
+    renderSwatches(els.masterColorSwatches, state.masterColor, color => {
+      state.masterColor = color;
+      renderMasterSwatches();
+    });
+  }
+
+  function renderOneTimeSwatches() {
+    renderSwatches(els.oneTimeColorSwatches, state.oneTimeColor, color => {
+      state.oneTimeColor = color;
+      renderOneTimeSwatches();
+    });
+  }
+
+  function renderSwatches(container, selectedColor, onSelect) {
+    container.innerHTML = "";
+    COLOR_OPTIONS.forEach(option => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `swatch ${selectedColor.toLowerCase() === option.value.toLowerCase() ? "selected" : ""}`;
+      button.title = option.name;
+      button.style.background = option.value;
+      button.addEventListener("click", () => onSelect(option.value));
+      container.append(button);
+    });
+    const custom = document.createElement("label");
+    custom.className = `swatch custom ${COLOR_OPTIONS.some(option => option.value.toLowerCase() === selectedColor.toLowerCase()) ? "" : "selected"}`;
+    custom.title = "カスタム";
+    custom.innerHTML = `<input type="color" value="${selectedColor}">`;
+    custom.querySelector("input").addEventListener("input", event => onSelect(event.target.value));
+    container.append(custom);
+  }
+
   function saveMasterFromPopup() {
     const current = state.editingMasterId ? state.masters.find(item => item.id === state.editingMasterId) : null;
     const next = normalizeMaster({
@@ -1084,7 +1410,8 @@
       taskName: els.masterTask.value.trim() || "今週の課題",
       memo: els.masterMemo.value,
       note: els.masterNote.value,
-      url: els.masterUrl.value.trim()
+      url: els.masterUrl.value.trim(),
+      color: state.masterColor
     });
     if (state.editingMasterId) {
       state.masters = state.masters.map(item => item.id === state.editingMasterId ? next : item);
@@ -1093,6 +1420,35 @@
     }
     saveMasters();
     closeMasterPopup();
+    render();
+  }
+
+  function openOneTimePopup() {
+    const firstDay = getWeekDates()[0].date;
+    state.oneTimeColor = "#4a9ee0";
+    els.oneTimeTitle.value = "";
+    els.oneTimeDate.value = toDateInput(firstDay);
+    els.oneTimeTime.value = "09:00";
+    renderOneTimeSwatches();
+    els.oneTimePopup.style.display = "flex";
+    els.oneTimeTitle.focus();
+  }
+
+  function closeOneTimePopup() {
+    els.oneTimePopup.style.display = "none";
+  }
+
+  function saveOneTimeFromPopup() {
+    const title = els.oneTimeTitle.value.trim();
+    if (!title) return;
+    state.oneTimes.push(normalizeOneTime({
+      title,
+      date: els.oneTimeDate.value,
+      time: els.oneTimeTime.value,
+      color: state.oneTimeColor
+    }));
+    saveOneTimes();
+    closeOneTimePopup();
     render();
   }
 
@@ -1141,6 +1497,7 @@
   function buildSyncPayload() {
     return {
       masters: state.masters,
+      oneTimes: state.oneTimes,
       completions: state.completions,
       settings: state.settings,
       savedAt: new Date().toISOString()
@@ -1151,9 +1508,11 @@
     if (!payload || !Array.isArray(payload.masters)) throw new Error("同期データの形式が正しくありません。");
     state.syncApplying = true;
     state.masters = payload.masters.map(normalizeMaster);
+    state.oneTimes = Array.isArray(payload.oneTimes) ? payload.oneTimes.map(normalizeOneTime) : [];
     state.completions = payload.completions && typeof payload.completions === "object" ? payload.completions : {};
     state.settings = { ...state.settings, ...(payload.settings || {}) };
     localStorage.setItem(MASTER_KEY, JSON.stringify(state.masters));
+    localStorage.setItem(ONE_TIME_KEY, JSON.stringify(state.oneTimes));
     localStorage.setItem(COMPLETION_KEY, JSON.stringify(state.completions));
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(state.settings));
     state.syncApplying = false;
@@ -1226,6 +1585,12 @@
   els.masterUrl.addEventListener("input", updateUrlOpen);
   els.masterPopup.addEventListener("click", event => {
     if (event.target === els.masterPopup) closeMasterPopup();
+  });
+  els.closeOneTimePopup.addEventListener("click", closeOneTimePopup);
+  els.cancelOneTime.addEventListener("click", closeOneTimePopup);
+  els.saveOneTime.addEventListener("click", saveOneTimeFromPopup);
+  els.oneTimePopup.addEventListener("click", event => {
+    if (event.target === els.oneTimePopup) closeOneTimePopup();
   });
 
   els.closeSettings.addEventListener("click", closeSettingsPopup);
