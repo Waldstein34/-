@@ -7,37 +7,37 @@
 <style>
   /* ===== テーマ変数 ===== */
   :root, [data-theme="light"] {
-    --bg: #ffffff;
+    --bg: #e4e8f0;
     --bg-grad-a: transparent;
     --bg-grad-b: transparent;
     --panel: #ffffff;
-    --panel-2: #b3b2b0;
-    --panel-3: #fafafa;
-    --line: #d1d5db;
-    --ink: #2d2d2d;
-    --muted: #9ca3af;
-    --focus: #1971c2;
-    --focus-soft: #e7f5ff;
-    --focus-border: #a5d8ff;
-    --danger: #f43f5e;
-    --danger-soft: #fff1f2;
-    --danger-border: #fca5a5;
-    --danger-label: #f43f5e;
-    --success: #34d399;
-    --info: #60a5fa;
-    --info-soft: #eff6ff;
-    --info-border: #93c5fd;
-    --warn: #fbbf24;
-    --shadow: 0 1px 3px rgba(21,37,44,.08), 0 4px 12px rgba(21,37,44,.06);
-    --popup-overlay: rgba(21,37,44,.18);
-    --carryover-badge-bg: #f3f4f6;
-    --carryover-badge-color: #f472b6;
+    --panel-2: #eceff5;
+    --panel-3: #f4f6fa;
+    --line: #c7ced9;
+    --ink: #161b24;
+    --muted: #5e6675;
+    --focus: #1d4ed8;
+    --focus-soft: #dde9fe;
+    --focus-border: #9cc0fa;
+    --danger: #dc2626;
+    --danger-soft: #fbe3e4;
+    --danger-border: #f0a9ad;
+    --danger-label: #c81e2a;
+    --success: #059669;
+    --info: #2563eb;
+    --info-soft: #dde9fe;
+    --info-border: #9cc0fa;
+    --warn: #d97706;
+    --shadow: 0 1px 2px rgba(20,27,36,.10), 0 4px 14px rgba(20,27,36,.10);
+    --popup-overlay: rgba(40,48,61,.28);
+    --carryover-badge-bg: #f1f3f7;
+    --carryover-badge-color: #ec4899;
     --radius: 8px;
     --radius-lg: 16px;
     --radius-pill: 20px;
     --lec-btn-color: var(--focus);
-    --carryover-bg: #fff1f2;
-    --task-card-bg: #fafafa;
+    --carryover-bg: #fdeced;
+    --task-card-bg: #f4f6fa;
     --theme-toggle-icon: "🌙";
   }
 
@@ -2750,6 +2750,20 @@
   ];
   const DEFAULT_TASK_COLOR = "#d8dedb";
 
+  // ライトモードでは明るすぎる色（薄いグレー等）を濃く変換して高コントラスト化
+  function displayColor(c) {
+    if (!c || document.documentElement.dataset.theme === "dark") return c || DEFAULT_TASK_COLOR;
+    const m = /^#?([0-9a-fA-F]{6})$/.exec(String(c).trim());
+    if (!m) return c;
+    const n = parseInt(m[1], 16);
+    const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    if (lum < 0.7) return c; // 既に十分濃い
+    const f = 0.45; // 暗くする係数
+    const hex = x => Math.round(x * f).toString(16).padStart(2, "0");
+    return `#${hex(r)}${hex(g)}${hex(b)}`;
+  }
+
   const state = {
     masters: loadMasters(),
     oneTimes: loadOneTimes(),
@@ -3238,7 +3252,7 @@
         <span class="tl-lec-name"></span>
         <span class="carryover-badge ${carryCount ? "has" : "none"}"></span>
       `;
-      label.querySelector(".tl-color-dot").style.background = master.color || DEFAULT_TASK_COLOR;
+      label.querySelector(".tl-color-dot").style.background = displayColor(master.color || DEFAULT_TASK_COLOR);
       label.querySelector(".tl-lec-name").textContent = master.lecture + (master.interval === "biweekly" ? "（隔週）" : "");
       label.querySelector(".carryover-badge").textContent = carryCount || "";
       label.addEventListener("click", () => openMasterPopup(master.id));
@@ -3309,7 +3323,7 @@
 
   function createTimelineBar(master, span = 1) {
     const bar = document.createElement("button");
-    const color = master.color || DEFAULT_TASK_COLOR;
+    const color = displayColor(master.color || DEFAULT_TASK_COLOR);
     bar.type = "button";
     bar.className = "tl-bar single";
     bar.style.left = "3px";
@@ -3425,7 +3439,7 @@
     const chip = document.createElement("div");
     const styleType = type === "once" ? "one-time" : type === "carry" ? "carryover" : "";
     chip.className = `chip ${styleType} ${done ? "done" : ""}`;
-    chip.style.borderLeftColor = color || DEFAULT_TASK_COLOR;
+    chip.style.borderLeftColor = displayColor(color || DEFAULT_TASK_COLOR);
     chip.innerHTML = `
       ${badge ? `<span class="chip-week">${badge}</span>` : ""}
       <span class="chip-title"></span>
@@ -3489,7 +3503,7 @@
   function buildFeedItem(it, now, mode) {
     const el = document.createElement("div");
     el.className = "feed-item" + (it.done ? " done" : "");
-    el.style.setProperty("--ic", it.color || DEFAULT_TASK_COLOR);
+    el.style.setProperty("--ic", displayColor(it.color || DEFAULT_TASK_COLOR));
     const status = mode === "overdue" ? fmtOver(now - it.due) : fmtLeft(it.due - now);
     el.innerHTML = `<input type="checkbox" class="fi-check" ${it.done ? "checked" : ""}>
       <div class="fi-main"><div class="fi-title"></div><div class="fi-sub"></div></div>
@@ -3771,7 +3785,7 @@
         cell.className = "tt-cell" + (item ? " filled" : "");
         if (item) {
           const col = masterColorFor(item.name);
-          if (col) cell.style.setProperty("--cell-color", col);
+          if (col) cell.style.setProperty("--cell-color", displayColor(col));
           cell.innerHTML = `<div class="c-name"></div>${item.room ? `<div class="c-room"></div>` : ""}${item.teacher ? `<div class="c-teacher"></div>` : ""}`;
           cell.querySelector(".c-name").textContent = item.name;
           if (item.room) cell.querySelector(".c-room").textContent = item.room;
@@ -4134,6 +4148,7 @@
   els.themeBtn.addEventListener("click", () => {
     setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
     saveSettings();
+    render();
   });
 
   els.settingsButton.addEventListener("click", () => openSettingsPopup("semester"));
