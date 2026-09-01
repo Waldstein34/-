@@ -1,0 +1,5 @@
+logs/
+uploader.log
+report.html
+__pycache__/
+*.pyc

@@ -1,0 +1,33 @@
+# PC操作ログ監視ツールの設定ファイル
+# 「対象PCの負荷を最優先で抑える」ことを重視した既定値になっています。
+
+watch:
+  interval_resource_sec: 120     # CPU/メモリ/ディスク使用率を記録する間隔(秒)
+  interval_window_sec: 10        # アクティブウィンドウを確認する間隔(秒)
+  disks:
+    - "C:\\"
+  folders:                       # ファイル操作(作成・変更・削除)を監視するフォルダ
+    - "%USERPROFILE%\\Documents"
+    - "%USERPROFILE%\\Desktop"
+    - "%USERPROFILE%\\Downloads"
+  recursive: true
+  ignore_patterns:               # 監視から除外するファイル名パターン
+    - "*.tmp"
+    - "*.crdownload"
+    - "~$*"
+    - "*.log"
+
+logging:
+  log_dir: "logs"                # ログの保存先(このフォルダからの相対パス)
+  flush_interval_sec: 15         # ログをディスクへまとめ書きする間隔(秒)
+  flush_batch_size: 50           # これだけイベントが溜まったら間隔を待たずに書き込む
+  max_days_local: 14             # ローカルに残すログの日数(古いものは自動削除)
+
+upload:
+  # ログの同期先。NASのネットワークパスや、クラウド同期クライアントのフォルダなどを指定してください。
+  # 例: "\\\\NAS\\pc-monitor\\%COMPUTERNAME%"  や  "D:\\OneDrive\\pc-monitor\\%COMPUTERNAME%"
+  destination: "\\\\NAS\\pc-monitor\\%COMPUTERNAME%"
+  method: "robocopy"             # robocopy(既定) | command
+  command: ""                    # method: command のとき使用。"{src}" "{dst}" が実際のパスに置き換わる(例: rclone)
+  interval_min: 30               # アップロードタスクの実行間隔(分)
+  bandwidth_throttle_kb: 0       # 0=無制限。ネットワーク負荷を抑えたい場合はkB/sで指定(robocopyの/IPGに反映)
