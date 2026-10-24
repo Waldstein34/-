@@ -277,6 +277,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2em 0; }
 .search-box label:focus-within { border-color: var(--accent); }
 .search-box svg { width: 20px; height: 20px; color: var(--muted); flex: none; }
 .search-box input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: inherit; font-size: 16px; height: 48px; }
+.search-box input::-webkit-search-cancel-button { filter: grayscale(1); opacity: .6; }
 .s-count { font-size: 13px; color: var(--muted); margin: 6px 0 4px; }
 .s-sec { font-size: 13px; color: var(--muted); margin: 18px 0 2px; font-weight: 600; letter-spacing: .06em; }
 .s-hit { display: block; padding: 12px 2px; border-bottom: 1px solid var(--line); color: var(--text); text-decoration: none; line-height: 1.65; }

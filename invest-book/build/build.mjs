@@ -66,7 +66,8 @@ const normKey = (s) => String(s).normalize('NFKC').toLowerCase().replace(/\s+/g,
 const toHira = (s) => s.replace(/[ァ-ヶ]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60));
 const stripTags = (h) =>
   h
-    .replace(/<[^>]+>/g, ' ')
+    .replace(/<\/?(p|li|h[1-6]|td|th|tr|div|section|aside|figure|button|ul|ol|br)\b[^>]*>/g, ' ')
+    .replace(/<[^>]+>/g, '')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
@@ -518,7 +519,13 @@ function parseEpisode(file, src, glossary) {
     subtitle: meta.subtitle || '',
     minutes,
     html,
-    text: stripTags(html.replace(/<aside class="blk blk-source"[\s\S]*?<\/aside>/g, '')),
+    text: stripTags(
+      html
+        .replace(/<aside class="blk blk-source"[\s\S]*?<\/aside>/g, '')
+        .replace(/<div class="blk-h">[\s\S]*?<\/div>/g, ' ')
+        .replace(/<span class="(badge|mk|exl|qno)">[\s\S]*?<\/span>/g, ' ')
+        .replace(/<button type="button" class="quiz-retry">[\s\S]*?<\/button>/g, ' ')
+    ),
     chars,
     file,
   };

@@ -472,6 +472,7 @@
   // ------------------------------------------------ router
   function route() {
     closeSheet(true);
+    document.getElementById('toast').classList.remove('show');
     var r = parseHash();
     var p = r.parts;
     if (!p.length) cover();
