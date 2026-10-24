@@ -255,7 +255,6 @@
     var e = EP[i];
     var pv = EP[i - 1];
     var nx = EP[i + 1];
-    curNo = e.no;
     setTop('第' + e.no + '話 ' + e.title, 'toc');
     bottom.className = 'bottom ep';
     var mk = markOf(e.no);
@@ -265,6 +264,7 @@
       '<button type="button" class="nb' + (mk ? ' on' : '') + '" data-act="mark" aria-pressed="' + (mk ? 'true' : 'false') + '">' + (mk ? I.bookmarkOn : I.bookmark) + '<span>しおり</span></button>' +
       '<a class="nb wide primary" href="' + (nx ? '#/ep/' + nx.no : '#/toc') + '" data-act="next"><span>' + (nx ? '次の話' : '目次へ') + '</span>' + I.next + '</a>';
     setView(episodeHtml(e, false));
+    curNo = e.no;
     S.set('last', e.no);
 
     // 位置の復元
