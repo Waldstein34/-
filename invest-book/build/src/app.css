@@ -340,6 +340,8 @@ mark { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 1
   body { line-height: 1.75; background: #fff; }
   .top, .bottom, .readbar, .sheet-wrap, .toast, .ep-end, .quiz-retry, .g-index, .search-box, .resume-card, .cover .acts { display: none !important; }
   main { max-width: none; padding: 0; }
+  html, body, #app, main { min-height: 0 !important; height: auto !important; }
+  main > :last-child, main > :last-child > :last-child { margin-bottom: 0 !important; padding-bottom: 0 !important; }
   .ep { break-before: page; page-break-before: always; padding-top: 0; }
   .ep-meta { margin-top: 0; }
   .blk, .table-wrap, .quiz-item, .g-item, figure { break-inside: avoid; page-break-inside: avoid; }
