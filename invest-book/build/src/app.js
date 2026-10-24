@@ -9,6 +9,7 @@
   var top = document.getElementById('top');
   var bottom = document.getElementById('bottom');
   var readbar = document.getElementById('readbar').firstChild;
+  var SMOOTH = (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'auto' : 'smooth';
 
   // ------------------------------------------------ storage（使えなくても動く）
   var S = (function () {
@@ -109,6 +110,7 @@
     var fs = (Number(S.get('fs', 1)) + 1) % 3;
     S.set('fs', fs);
     applySettings();
+    fitTables();
     scrollToRatio(r);
     toast('文字サイズ: ' + FS_LABEL[fs]);
   }
@@ -156,7 +158,7 @@
     readbar.style.width = '0';
   }
 
-  function cover() {
+  function cover(y) {
     setTop('', 'none');
     navTabs('');
     var le = lastEp();
@@ -185,9 +187,10 @@
       (S.ok ? '' : '<p class="resume-note">この環境では読書の記録を保存できません。ページを閉じると既読やしおりは消えます。</p>') +
       '</section>'
     );
+    restoreTo(y || 0);
   }
 
-  function toc() {
+  function toc(y) {
     setTop('目次', 'cover');
     navTabs('toc');
     var readN = EP.filter(function (e) { return isRead(e.no); }).length;
@@ -215,7 +218,8 @@
         h += '<h2 class="part-h"><b>第' + e.part + '部</b>' + esc(D.parts[e.part] || '') + '</h2><ul class="toc-list">';
       }
       var rd = isRead(e.no);
-      h += '<li><a href="#/ep/' + e.no + '" class="' + (rd ? 'is-read' : '') + '">' +
+      var here = prevView && prevView.name === 'ep' && prevView.no === e.no;
+      h += '<li><a href="#/ep/' + e.no + '" id="toc-' + e.no + '" class="' + (rd ? 'is-read' : '') + (here ? ' here' : '') + '"' + (here ? ' aria-current="true"' : '') + '>' +
         '<span class="no">' + e.no + '</span>' +
         '<span><span class="t">' + esc(e.title) + '</span>' + (e.subtitle ? '<span class="s">' + esc(e.subtitle) + '</span>' : '') + '</span>' +
         '<span class="r">' + (markOf(e.no) ? '<span class="bm" aria-label="しおりあり">' + I.bookmarkOn + '</span>' : '') +
@@ -225,6 +229,11 @@
     if (curPart !== null) h += '</ul>';
     if (!EP.length) h += '<p class="empty">まだ原稿がありません。</p>';
     setView(h);
+    // 話から目次を開いたときは、いま読んでいた話の行を画面に入れる
+    var cur = view.querySelector('.toc-list a.here');
+    if (y != null) restoreTo(y);
+    else if (cur) { window.scrollTo(0, 0); cur.scrollIntoView({ block: 'center' }); }
+    else window.scrollTo(0, 0);
   }
 
   function episodeHtml(e, forPrint) {
@@ -249,7 +258,7 @@
   }
 
   var curNo = null;
-  function episode(no, params) {
+  function episode(no, params, y) {
     var i = idxOf(no);
     if (i < 0) { location.replace('#/toc'); return; }
     var e = EP[i];
@@ -264,6 +273,7 @@
       '<button type="button" class="nb' + (mk ? ' on' : '') + '" data-act="mark" aria-pressed="' + (mk ? 'true' : 'false') + '">' + (mk ? I.bookmarkOn : I.bookmark) + '<span>しおり</span></button>' +
       '<a class="nb wide primary" href="' + (nx ? '#/ep/' + nx.no : '#/toc') + '" data-act="next"><span>' + (nx ? '次の話' : '目次へ') + '</span>' + I.next + '</a>';
     setView(episodeHtml(e, false));
+    fitTables();
     curNo = e.no;
     S.set('last', e.no);
 
@@ -271,15 +281,21 @@
     var pos = null;
     if (params.pos != null) pos = parseFloat(params.pos);
     else if (params.resume) pos = (S.get('pos', {})[e.no]) || 0;
-    if (pos) requestAnimationFrame(function () { scrollToRatio(pos); updateBar(); });
+    if (y != null) { restoreTo(y); requestAnimationFrame(updateBar); }
+    else if (pos) requestAnimationFrame(function () { scrollToRatio(pos); updateBar(); });
     else window.scrollTo(0, 0);
-    if (params.q) highlight(params.q);
+    if (params.q && y == null) highlight(params.q);
+    else if (params.q) highlight(params.q, true);
 
     // 読了・位置の保存
     var end = document.getElementById('ep-end');
     var io = null;
     var armed = false;
-    setTimeout(function () { armed = true; }, 800);
+    setTimeout(function () {
+      armed = true;
+      // 開いてすぐ末尾にいる（続きから・しおりで末尾付近に来た）場合も読了にする
+      if (curNo === e.no && end.getBoundingClientRect().top < window.innerHeight) reachEnd();
+    }, 800);
     function reachEnd() {
       if (!armed || isRead(e.no)) return;
       setRead(e.no, true);
@@ -314,9 +330,20 @@
       curNo = null;
     };
   }
+  // 表の「折り返さない列」（番号・金額など）が画面幅に収まらないときだけ、折り返しを許す
+  function fitTables() {
+    Array.prototype.forEach.call(view.querySelectorAll('.table-wrap'), function (w) {
+      var cs = w.querySelectorAll('td.nw, td.nw-off');
+      if (!cs.length) return;
+      Array.prototype.forEach.call(cs, function (c) { c.classList.add('nw'); c.classList.remove('nw-off'); });
+      if (w.scrollWidth > w.clientWidth + 1) Array.prototype.forEach.call(cs, function (c) { c.classList.remove('nw'); c.classList.add('nw-off'); });
+    });
+  }
+  var rsT;
+  window.addEventListener('resize', function () { clearTimeout(rsT); rsT = setTimeout(fitTables, 150); });
   function updateBar() { readbar.style.width = (scrollRatio() * 100) + '%'; }
 
-  function highlight(q) {
+  function highlight(q, noScroll) {
     var nq = norm(q);
     if (!nq) return;
     var art = view.querySelector('.ep');
@@ -330,13 +357,13 @@
         r.setEnd(n, k + q.length);
         var m = document.createElement('mark');
         r.surroundContents(m);
-        setTimeout(function () { m.scrollIntoView({ block: 'center' }); }, 50);
+        if (!noScroll) setTimeout(function () { m.scrollIntoView({ block: 'center' }); }, 50);
         return;
       }
     }
   }
 
-  function glossary(params) {
+  function glossary(params, y) {
     setTop('用語集', 'toc');
     navTabs('glossary');
     var G = D.glossary;
@@ -359,6 +386,7 @@
     });
     if (!G.length) h += '<p class="empty">用語集はまだありません。</p>';
     setView(h);
+    if (y != null) { restoreTo(y); return; }
     window.scrollTo(0, 0);
     if (params.t) {
       var items = view.querySelectorAll('.g-item');
@@ -374,16 +402,51 @@
     }
   }
 
-  function snippet(text, nq, len) {
-    var nt = norm(text);
+  // 検索用の本文テキスト（出典・ラベル類を除く）。データを軽くするため端末側で html から作る
+  function epText(e) {
+    if (e._t == null) {
+      e._t = String(e.html)
+        .replace(/<aside class="blk blk-source"[\s\S]*?<\/aside>/g, '')
+        .replace(/<div class="blk-h">[\s\S]*?<\/div>/g, ' ')
+        .replace(/<span class="(badge|mk|exl|qno)">[\s\S]*?<\/span>/g, ' ')
+        .replace(/<button type="button" class="quiz-retry">[\s\S]*?<\/button>/g, ' ')
+        .replace(/<\/?(p|li|h[1-6]|td|th|tr|div|section|aside|figure|button|ul|ol|br)\b[^>]*>/g, ' ')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+    return e._t;
+  }
+  // 正規化後の位置 → 元の文字列の位置。抜粋は元の表記（大文字・全角など）のまま見せる
+  function normMap(text) {
+    var nt = '';
+    var map = [];
+    for (var i = 0; i < text.length; i++) {
+      var c = text.charAt(i);
+      var code = text.charCodeAt(i);
+      if (code >= 0xD800 && code < 0xDC00 && i + 1 < text.length) c = text.substr(i, 2);
+      var n = norm(c);
+      for (var j = 0; j < n.length; j++) { nt += n.charAt(j); map.push(i); }
+      i += c.length - 1;
+    }
+    map.push(text.length);
+    return { nt: nt, map: map };
+  }
+  function snippet(e, nq, len) {
+    if (!e._nm) e._nm = normMap(epText(e));
+    var text = epText(e);
+    var nt = e._nm.nt;
+    var mp = e._nm.map;
     var out = [];
     var from = 0;
     for (var c = 0; c < 2; c++) {
       var k = nt.indexOf(nq, from);
       if (k < 0) break;
-      var s = Math.max(0, k - len);
+      var s = Math.max(from, k - len);
       var e2 = Math.min(nt.length, k + nq.length + len);
-      out.push((s > 0 ? '…' : '') + esc(nt.slice(s, k)) + '<mark>' + esc(nt.slice(k, k + nq.length)) + '</mark>' + esc(nt.slice(k + nq.length, e2)) + (e2 < nt.length ? '…' : ''));
+      var os = mp[s], ok = mp[k], ok2 = mp[k + nq.length], oe = mp[e2];
+      out.push((os > 0 ? '…' : '') + esc(text.slice(os, ok)) + '<mark>' + esc(text.slice(ok, ok2)) + '</mark>' + esc(text.slice(ok2, oe)) + (oe < text.length ? '…' : ''));
       from = e2;
     }
     return out;
@@ -393,7 +456,7 @@
     while ((k = nt.indexOf(nq, k)) >= 0) { n++; k += nq.length; }
     return n;
   }
-  function search(params) {
+  function search(params, y) {
     setTop('検索', 'toc');
     navTabs('search');
     setView('<div class="search-box"><label>' + I.search + '<input id="q" type="search" enterkeyhint="search" placeholder="言葉で探す（例: 複利）" autocomplete="off" aria-label="検索語"></label></div><div id="results"></div>');
@@ -404,14 +467,14 @@
     var t;
     function run() {
       var q = input.value.trim();
-      try { history.replaceState(null, '', '#/search' + (q ? '?q=' + encodeURIComponent(q) : '')); } catch (e) { /* ignore */ }
+      try { history.replaceState(history.state, '', '#/search' + (q ? '?q=' + encodeURIComponent(q) : '')); } catch (e) { /* ignore */ }
       if (!q) { res.innerHTML = '<p class="empty">本文と用語集から探せます。</p>'; return; }
       var nq = norm(q);
       var eh = [];
       EP.forEach(function (e) {
-        var nt = norm(e.title + ' ' + e.subtitle + ' ' + e.text);
+        var nt = norm(e.title + ' ' + e.subtitle + ' ' + epText(e));
         var c = countHits(nt, nq);
-        if (c) eh.push({ e: e, c: c, sn: snippet(e.text, nq, 24) });
+        if (c) eh.push({ e: e, c: c, sn: snippet(e, nq, 24) });
       });
       var gh = D.glossary.filter(function (g) { return norm(g.term + ' ' + g.reading + ' ' + g.text).indexOf(nq) >= 0; });
       var h = '<p class="s-count">' + eh.length + '話・用語' + gh.length + '件が見つかりました</p>';
@@ -434,6 +497,7 @@
     input.addEventListener('input', function () { clearTimeout(t); t = setTimeout(run, 150); });
     input.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') input.blur(); });
     run();
+    if (y != null) restoreTo(y);
     if (!params.q) setTimeout(function () { try { input.focus(); } catch (e) { /* ignore */ } }, 50);
   }
 
@@ -469,18 +533,55 @@
     window.__printReady = true;
   }
 
+  // ------------------------------------------------ 戻る・進むでのスクロール位置
+  // 履歴の1件ごとに鍵をつけ、離れるときの位置を覚えておく。戻る/進むで来たときだけ復元し、
+  // リンクで新しく開いたページは先頭（話は「続きから」の位置）から表示する。
+  var scrollMem = {};
+  try { scrollMem = JSON.parse(window.sessionStorage.getItem('ib:scroll') || '{}') || {}; } catch (e) { scrollMem = {}; }
+  try { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch (e) { /* ignore */ }
+  var curKey = null;
+  var prevView = null;
+  var curView = null;
+  function saveScroll() {
+    if (curKey) scrollMem[curKey] = Math.round(window.scrollY);
+    try { window.sessionStorage.setItem('ib:scroll', JSON.stringify(scrollMem)); } catch (e) { /* ignore */ }
+  }
+  function entryKey() {
+    var st = history.state;
+    if (st && st.k) {
+      if (st.sheet) { try { history.replaceState({ k: st.k }, '', location.href); } catch (e) { /* ignore */ } }
+      return st.k;
+    }
+    var k = 'k' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    try { history.replaceState({ k: k }, '', location.href); } catch (e) { /* ignore */ }
+    return k;
+  }
+  function restoreTo(y) {
+    window.scrollTo(0, y);
+    requestAnimationFrame(function () { window.scrollTo(0, y); });
+  }
+  window.addEventListener('pagehide', saveScroll);
+
   // ------------------------------------------------ router
   function route() {
+    if (curKey) scrollMem[curKey] = Math.round(window.scrollY);
     closeSheet(true);
     document.getElementById('toast').classList.remove('show');
+    var st = history.state;
+    var back = !!(st && st.k && scrollMem[st.k] != null);
+    curKey = entryKey();
+    var y = back ? scrollMem[curKey] : null;
     var r = parseHash();
     var p = r.parts;
-    if (!p.length) cover();
-    else if (p[0] === 'toc') toc();
-    else if (p[0] === 'ep') episode(parseInt(p[1], 10), r.params);
-    else if (p[0] === 'glossary') glossary(r.params);
-    else if (p[0] === 'search') search(r.params);
-    else cover();
+    prevView = curView;
+    curView = { name: p[0] || 'cover', no: p[0] === 'ep' ? parseInt(p[1], 10) : null };
+    if (!p.length) cover(y);
+    else if (p[0] === 'toc') toc(y);
+    else if (p[0] === 'ep') episode(parseInt(p[1], 10), r.params, y);
+    else if (p[0] === 'glossary') glossary(r.params, y);
+    else if (p[0] === 'search') search(r.params, y);
+    else cover(y);
+    try { window.sessionStorage.setItem('ib:scroll', JSON.stringify(scrollMem)); } catch (e) { /* ignore */ }
   }
 
   // ------------------------------------------------ term sheet
@@ -495,14 +596,24 @@
     document.getElementById('sheet-body').innerHTML = g.html;
     document.getElementById('sheet-more').setAttribute('href', '#/glossary?t=' + encodeURIComponent(g.term));
     sheet.hidden = false;
+    // スマホの「戻る」で説明だけを閉じられるよう、履歴を1件積む
+    try { history.pushState({ k: curKey, sheet: 1 }, '', location.href); } catch (e) { /* ignore */ }
     var c = sheet.querySelector('.sheet [data-act="sheet-close"]');
     if (c) c.focus({ preventScroll: true });
   }
-  function closeSheet(silent) {
+  function hideSheet(silent) {
     if (sheet.hidden) return;
     sheet.hidden = true;
     if (!silent && lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
   }
+  function closeSheet(silent) {
+    if (sheet.hidden) return;
+    if (!silent && history.state && history.state.sheet) { history.back(); return; }
+    hideSheet(silent);
+  }
+  window.addEventListener('popstate', function () {
+    if (!sheet.hidden && !(history.state && history.state.sheet)) hideSheet(false);
+  });
 
   // ------------------------------------------------ events
   document.addEventListener('click', function (ev) {
@@ -522,12 +633,19 @@
         v.className = 'verdict ng';
         v.textContent = right ? '残念、正解は ' + right.textContent + ' です。' : 'この問題には正解が設定されていません。';
       }
+      // 解説が下のナビに隠れないよう、必要なときだけ少し送る
+      var ex = qi.querySelector('.quiz-ex');
+      if (ex) requestAnimationFrame(function () { ex.scrollIntoView({ block: 'nearest', behavior: SMOOTH }); });
       return;
     }
     if (el.classList.contains('quiz-retry')) {
       var q2 = el.closest('.quiz-item');
       q2.classList.remove('done');
       Array.prototype.forEach.call(q2.querySelectorAll('.picked'), function (c) { c.classList.remove('picked'); });
+      // 解説が消えて問題文が上へ外れたら、問題の頭に戻す
+      if (q2.getBoundingClientRect().top < 60) q2.scrollIntoView({ block: 'start' });
+      var first = q2.querySelector('.choice');
+      if (first) first.focus({ preventScroll: true });
       return;
     }
     var act = el.getAttribute('data-act');
@@ -564,7 +682,15 @@
     }
   });
   // 用語集の「用語集で見る」で同じハッシュでも閉じる
-  document.getElementById('sheet-more').addEventListener('click', function () { closeSheet(true); });
+  // 説明用に積んだ履歴を用語集で置き換える（用語集から「戻る」で本文に一度で戻れる）
+  document.getElementById('sheet-more').addEventListener('click', function (ev) {
+    var href = this.getAttribute('href');
+    if (history.state && history.state.sheet) {
+      ev.preventDefault();
+      hideSheet(true);
+      location.replace(href);
+    } else hideSheet(true);
+  });
 
   // ------------------------------------------------ start
   applySettings();

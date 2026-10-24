@@ -347,10 +347,21 @@ function table(rows, ctx) {
   }
   const cols = Math.max(...rows.filter((r) => !isSep(r)).map((r) => splitRow(r.t).length));
   if (cols > 3) warn(ctx.file, rows[0].ln, `表が${cols}列あります（3列以内が目安）`);
+  // 短い値だけの列（番号・金額・期間など）は折り返さない。電話番号や「22〜28」が途中で割れるのを防ぐ
+  const plain = (c) => c.replace(/\[\[([^\]|]*)(\|[^\]]*)?\]\]/g, '$1').replace(/\*\*/g, '').trim();
+  const isShort = (c) => {
+    const s = plain(c);
+    if (s.length <= 6) return true;
+    return s.length <= 13 && /\d/.test(s) && (s.match(/[^\x00-\x7F]/g) || []).length <= 4;
+  };
+  const bodyRows = body.filter((r) => !isSep(r)).map((r) => splitRow(r.t));
+  const nowrap = [];
+  for (let k = 0; k < cols; k++) nowrap[k] = bodyRows.length > 0 && bodyRows.every((cs) => isShort(cs[k] || ''));
   const cell = (tag, c, k, ln) => {
     ctx.ln = ln;
     const a = align[k] ? ` style="text-align:${align[k]}"` : '';
-    return `<${tag}${a}>${inline(c, ctx)}</${tag}>`;
+    const nw = tag === 'td' && nowrap[k] ? ' class="nw"' : '';
+    return `<${tag}${nw}${a}>${inline(c, ctx)}</${tag}>`;
   };
   let h = '<div class="table-wrap"><table>';
   if (head) h += `<thead><tr>${splitRow(head.t).map((c, k) => cell('th', c, k, head.ln)).join('')}</tr></thead>`;
@@ -566,7 +577,8 @@ function main() {
   const data = {
     book: BOOK,
     parts: PARTS,
-    episodes: eps.map(({ no, part, title, subtitle, minutes, html, text }) => ({ no, part, title, subtitle, minutes, html, text })),
+    // 検索用の本文テキストは端末側で html から作る（データ量を約2割減らし、開くまでの時間を短くする）
+    episodes: eps.map(({ no, part, title, subtitle, minutes, html }) => ({ no, part, title, subtitle, minutes, html })),
     glossary: gloss,
     icons: ICONS,
     builtAt: new Date().toISOString(),
