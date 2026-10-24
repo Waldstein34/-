@@ -561,7 +561,7 @@ function main() {
   const css = fs.readFileSync(path.join(HERE, 'src', 'app.css'), 'utf8');
   const dark = fs.readFileSync(path.join(HERE, 'src', 'dark.css'), 'utf8');
   const js = fs.readFileSync(path.join(HERE, 'src', 'app.js'), 'utf8');
-  const json = JSON.stringify(data).replace(/</g, '\\u003c').replace(/ /g, '\\u2028').replace(/ /g, '\\u2029');
+  const json = JSON.stringify(data).replace(/</g, '\\u003c').replace(/[\u2028\u2029]/g, (c) => '\\u' + c.charCodeAt(0).toString(16));
   const boot = `(function(){try{var s=JSON.parse(localStorage.getItem('investbook:v1')||'{}')||{};var r=document.documentElement;if(s.theme==='light'||s.theme==='dark')r.setAttribute('data-theme',s.theme);if(s.fs!=null)r.setAttribute('data-fs',s.fs);}catch(e){}if(/[?&]print=1/.test(location.search))document.documentElement.classList.add('print-mode');})();`;
 
   const out = `<!doctype html>

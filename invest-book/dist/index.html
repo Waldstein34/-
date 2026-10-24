@@ -1,0 +1,1005 @@
+<!doctype html>
+<html lang="ja" data-fs="1">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f5f3ee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1a1c1e" media="(prefers-color-scheme: dark)">
+<title>投資の「なぜ」がわかる本</title>
+<script>(function(){try{var s=JSON.parse(localStorage.getItem('investbook:v1')||'{}')||{};var r=document.documentElement;if(s.theme==='light'||s.theme==='dark')r.setAttribute('data-theme',s.theme);if(s.fs!=null)r.setAttribute('data-fs',s.fs);}catch(e){}if(/[?&]print=1/.test(location.search))document.documentElement.classList.add('print-mode');})();</script>
+<style>
+/* ===== tokens ===== */
+:root {
+  --bg: #f5f3ee;
+  --surface: #fffdf8;
+  --surface2: #efece5;
+  --text: #2b2a27;
+  --muted: #6d6961;
+  --line: #e0dbd0;
+  --accent: #3b6c76;
+  --accent-soft: #e3eeef;
+  --on-accent: #ffffff;
+  --shadow: 0 -6px 24px rgba(40,35,25,.10);
+  --q-bg: #edf1f6; --q-bd: #7189ab; --q-ink: #3d5778;
+  --a-bg: #ecf3ed; --a-bd: #5f8f68; --a-ink: #3b6544;
+  --w-bg: #f6f0e1; --w-bd: #b48a3a; --w-ink: #7a5a1c;
+  --s-bg: #f1eef6; --s-bd: #8a78ab; --s-ink: #5a4a7a;
+  --c-bg: #f8ede9; --c-bd: #b86c5a; --c-ink: #8a4535;
+  --m-bg: #e9f2f1; --m-bd: #4c8a88; --m-ink: #2f6462;
+  --ok-bg: #e5f1e7; --ok-bd: #4f8a5b; --ng-bg: #f7e7e4; --ng-bd: #b5594b;
+  --mark: #f3e2a6;
+  --fs: 17px;
+  --font: system-ui, -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Noto Sans CJK JP", "BIZ UDPGothic", "Yu Gothic UI", "Yu Gothic", Meiryo, sans-serif;
+  --top-h: 52px;
+  --bot-h: 62px;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+  --bg: #1a1c1e;
+  --surface: #222528;
+  --surface2: #2a2e32;
+  --text: #dcd9d2;
+  --muted: #9b978f;
+  --line: #34383d;
+  --accent: #86b7c0;
+  --accent-soft: #24363a;
+  --on-accent: #10181a;
+  --shadow: 0 -6px 24px rgba(0,0,0,.35);
+  --q-bg: #1f2833; --q-bd: #7f9cc2; --q-ink: #a9c0de;
+  --a-bg: #1e2a22; --a-bd: #7fae88; --a-ink: #a7cdae;
+  --w-bg: #2c2719; --w-bd: #c7a25a; --w-ink: #e0c387;
+  --s-bg: #262331; --s-bd: #9f8dc2; --s-ink: #c4b7de;
+  --c-bg: #2f2220; --c-bd: #cf8a78; --c-ink: #e4ac9d;
+  --m-bg: #1c2b2b; --m-bd: #6fb0ae; --m-ink: #9fd0ce;
+  --ok-bg: #1f3325; --ok-bd: #7fbf8c; --ng-bg: #3a2322; --ng-bd: #d98a7f;
+  --mark: #5a4a1c;
+
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1a1c1e;
+  --surface: #222528;
+  --surface2: #2a2e32;
+  --text: #dcd9d2;
+  --muted: #9b978f;
+  --line: #34383d;
+  --accent: #86b7c0;
+  --accent-soft: #24363a;
+  --on-accent: #10181a;
+  --shadow: 0 -6px 24px rgba(0,0,0,.35);
+  --q-bg: #1f2833; --q-bd: #7f9cc2; --q-ink: #a9c0de;
+  --a-bg: #1e2a22; --a-bd: #7fae88; --a-ink: #a7cdae;
+  --w-bg: #2c2719; --w-bd: #c7a25a; --w-ink: #e0c387;
+  --s-bg: #262331; --s-bd: #9f8dc2; --s-ink: #c4b7de;
+  --c-bg: #2f2220; --c-bd: #cf8a78; --c-ink: #e4ac9d;
+  --m-bg: #1c2b2b; --m-bd: #6fb0ae; --m-ink: #9fd0ce;
+  --ok-bg: #1f3325; --ok-bd: #7fbf8c; --ng-bg: #3a2322; --ng-bd: #d98a7f;
+  --mark: #5a4a1c;
+
+  color-scheme: dark;
+}
+:root[data-fs="0"] { --fs: 16px; }
+:root[data-fs="1"] { --fs: 17px; }
+:root[data-fs="2"] { --fs: 18px; }
+
+/* ===== base ===== */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; background: var(--bg); }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: var(--fs);
+  line-height: 1.85;
+  letter-spacing: .02em;
+  overflow-wrap: anywhere;
+  line-break: strict;
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+}
+a { color: var(--accent); }
+button { font: inherit; color: inherit; letter-spacing: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+main { display: block; max-width: 680px; margin: 0 auto; padding: 8px 18px calc(var(--bot-h) + var(--safe-b) + 40px); outline: none; }
+h1, h2, h3 { line-height: 1.5; letter-spacing: .03em; font-feature-settings: "palt"; }
+p { margin: 0 0 1em; }
+strong { font-weight: 700; background: linear-gradient(transparent 62%, color-mix(in srgb, var(--mark) 75%, transparent) 62%); }
+.muted { color: var(--muted); }
+hr { border: 0; border-top: 1px solid var(--line); margin: 2em 0; }
+
+/* ===== top bar ===== */
+.top {
+  position: sticky; top: 0; z-index: 20;
+  height: var(--top-h);
+  display: flex; align-items: center; gap: 2px;
+  padding: 0 6px;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+  font-size: 15px; line-height: 1.4;
+}
+.top .ttl { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; padding: 0 4px; color: var(--muted); font-size: 14px; }
+.ib {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 44px; height: 44px; padding: 0 8px;
+  border: 0; background: none; border-radius: 10px; color: var(--text); cursor: pointer; text-decoration: none;
+  font-size: 14px; font-weight: 600;
+}
+.ib svg { width: 22px; height: 22px; }
+.ib:active { background: var(--surface2); }
+.ib .aa { font-size: 13px; letter-spacing: 0; }
+.ib .aa b { font-size: 18px; }
+.readbar { position: sticky; top: var(--top-h); z-index: 19; height: 2px; margin-top: -2px; pointer-events: none; }
+.readbar i { display: block; height: 100%; width: 0; background: var(--accent); opacity: .7; transition: width .15s linear; }
+
+/* ===== bottom nav ===== */
+.bottom {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  padding: 4px 6px calc(4px + var(--safe-b));
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-top: 1px solid var(--line);
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px;
+  font-size: 12px; line-height: 1.2;
+}
+.bottom:empty { display: none; }
+.nb {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  min-height: 52px; padding: 4px 2px;
+  border: 0; background: none; border-radius: 12px;
+  color: var(--muted); text-decoration: none; cursor: pointer; letter-spacing: .02em;
+}
+.nb svg { width: 24px; height: 24px; }
+.nb.on { color: var(--accent); font-weight: 600; }
+.nb:active { background: var(--surface2); }
+.nb[aria-disabled="true"] { opacity: .32; pointer-events: none; }
+.nb.wide { flex-direction: row; gap: 2px; font-size: 14px; font-weight: 600; color: var(--text); }
+.nb.wide.primary { background: var(--accent); color: var(--on-accent); }
+.nb.wide.primary:active { filter: brightness(.95); }
+.bottom.ep { grid-template-columns: 1.35fr .8fr .8fr 1.35fr; grid-auto-flow: row; }
+
+/* ===== buttons ===== */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 48px; padding: 10px 18px;
+  border-radius: 12px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--text);
+  font-size: 15px; font-weight: 600; text-decoration: none; cursor: pointer; line-height: 1.4;
+}
+.btn svg { width: 20px; height: 20px; flex: none; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.block { display: flex; width: 100%; }
+.btn:active { filter: brightness(.96); }
+
+/* ===== cover ===== */
+.cover { min-height: calc(100vh - var(--top-h) - var(--bot-h) - 40px); min-height: calc(100svh - var(--top-h) - var(--bot-h) - 40px); display: flex; flex-direction: column; justify-content: center; padding: 28px 4px 12px; }
+.cover .mark { color: var(--accent); margin-bottom: 18px; }
+.cover .mark svg { width: 44px; height: 44px; stroke-width: 1.4; }
+.cover .aud { font-size: 13px; color: var(--muted); letter-spacing: .12em; margin: 0 0 10px; }
+.cover h1 { font-size: 1.85rem; line-height: 1.4; margin: 0 0 14px; letter-spacing: .04em; }
+.cover h1 .q { color: var(--accent); }
+.cover .sub { color: var(--muted); font-size: .95em; line-height: 1.8; margin: 0 0 28px; }
+.cover .stats { display: flex; gap: 10px; margin: 0 0 22px; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
+.cover .stats span { padding: 4px 10px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface); }
+.cover .acts { display: grid; gap: 10px; }
+.cover .resume-note { font-size: 13px; color: var(--muted); margin: 2px 0 0; text-align: center; line-height: 1.6; }
+.cover .rule { height: 1px; background: var(--line); margin: 0 0 24px; width: 48px; }
+
+/* ===== toc ===== */
+.pg-h { font-size: 1.35rem; margin: 18px 0 6px; }
+.toc-progress { margin: 4px 0 18px; }
+.meter { height: 6px; border-radius: 99px; background: var(--surface2); overflow: hidden; margin: 6px 0 4px; }
+.meter i { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
+.toc-progress .lbl { font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; }
+.resume-card { display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin: 0 0 18px; border-radius: 14px; background: var(--accent-soft); color: var(--text); text-decoration: none; line-height: 1.5; }
+.resume-card svg { width: 26px; height: 26px; color: var(--accent); flex: none; }
+.resume-card small { display: block; color: var(--muted); font-size: 12px; }
+.resume-card b { font-size: 15px; }
+.part-h { font-size: 13px; color: var(--muted); letter-spacing: .08em; margin: 26px 0 6px; padding-bottom: 6px; border-bottom: 1px solid var(--line); font-weight: 600; }
+.part-h b { color: var(--accent); margin-right: .5em; }
+.toc-list { list-style: none; margin: 0; padding: 0; }
+.toc-list a { display: grid; grid-template-columns: 2.4em 1fr auto; align-items: center; gap: 10px; padding: 11px 2px; min-height: 60px; color: var(--text); text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent); line-height: 1.5; }
+.toc-list a:active { background: var(--surface2); }
+.toc-list .no { font-size: 13px; color: var(--muted); text-align: center; font-variant-numeric: tabular-nums; }
+.toc-list .t { font-size: 15.5px; font-weight: 600; display: block; }
+.toc-list .s { font-size: 12.5px; color: var(--muted); display: block; margin-top: 1px; }
+.toc-list .r { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; white-space: nowrap; }
+.toc-list .r svg { width: 22px; height: 22px; }
+.toc-list .r .ck { color: var(--line); }
+.toc-list .is-read .ck { color: var(--accent); }
+.toc-list .is-read .t { color: var(--muted); }
+.toc-list .bm { color: var(--w-bd); }
+.toc-list .bm svg { width: 16px; height: 16px; }
+.marks { margin: 0 0 8px; }
+.marks a { display: flex; align-items: center; gap: 10px; padding: 10px 2px; color: var(--text); text-decoration: none; border-bottom: 1px solid var(--line); font-size: 14.5px; line-height: 1.5; min-height: 48px; }
+.marks a svg { width: 18px; height: 18px; color: var(--w-bd); flex: none; }
+.marks small { color: var(--muted); margin-left: auto; white-space: nowrap; font-size: 12px; }
+
+/* ===== episode ===== */
+.ep { padding-top: 10px; }
+.ep-meta { font-size: 13px; color: var(--accent); letter-spacing: .08em; font-weight: 600; margin: 14px 0 4px; }
+.ep h1 { font-size: 1.5rem; margin: 0 0 6px; }
+.ep-sub { color: var(--muted); font-size: .92em; line-height: 1.7; margin: 0 0 22px; }
+.ep h2 { font-size: 1.22rem; margin: 2.2em 0 .8em; padding: 0 0 .35em; border-bottom: 1px solid var(--line); }
+.ep h3 { font-size: 1.06rem; margin: 1.8em 0 .5em; padding-left: .6em; border-left: 3px solid var(--accent); line-height: 1.55; }
+.ep ul, .ep ol { margin: 0 0 1em; padding-left: 1.5em; }
+.ep li { margin: .3em 0; padding-left: .15em; }
+.ep li.nested { margin-left: 1.2em; list-style-type: circle; }
+.ep li::marker { color: var(--muted); }
+
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 1.3em 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.table-wrap table { border-collapse: collapse; width: 100%; font-size: .9em; line-height: 1.6; }
+.table-wrap th, .table-wrap td { padding: .6em .75em; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); overflow-wrap: normal; word-break: keep-all; }
+.table-wrap th + th, .table-wrap td + td { border-left: 1px solid var(--line); }
+.table-wrap thead th { background: var(--surface2); font-weight: 600; font-size: .95em; }
+.table-wrap tbody tr:last-child td { border-bottom: 0; }
+
+.term { color: var(--accent); text-decoration: underline; text-decoration-style: dotted; text-decoration-thickness: 1.5px; text-underline-offset: .28em; cursor: pointer; border-radius: 3px; }
+.term:active { background: var(--accent-soft); }
+
+/* blocks */
+.blk { --bg2: var(--surface); --bd: var(--line); --ink: var(--muted); margin: 1.5em 0; padding: .85em 1.05em 1em; border-radius: 14px; background: var(--bg2); border: 1px solid color-mix(in srgb, var(--bd) 28%, transparent); border-left: 4px solid var(--bd); }
+.blk-h { display: flex; align-items: center; gap: .45em; font-size: 13.5px; font-weight: 700; letter-spacing: .08em; color: var(--ink); margin: 0 0 .45em; line-height: 1.4; }
+.blk-h svg { width: 20px; height: 20px; flex: none; }
+.blk-b > :last-child { margin-bottom: 0; }
+.blk-b ul, .blk-b ol { padding-left: 1.3em; }
+.blk-question { --bg2: var(--q-bg); --bd: var(--q-bd); --ink: var(--q-ink); }
+.blk-question .blk-b { font-size: 1.04em; font-weight: 600; }
+.blk-answer { --bg2: var(--a-bg); --bd: var(--a-bd); --ink: var(--a-ink); }
+.blk-why { --bg2: var(--w-bg); --bd: var(--w-bd); --ink: var(--w-ink); padding-top: 1em; padding-bottom: 1.1em; }
+.blk-student { --bg2: var(--s-bg); --bd: var(--s-bd); --ink: var(--s-ink); }
+.blk-caution { --bg2: var(--c-bg); --bd: var(--c-bd); --ink: var(--c-ink); }
+.blk-summary { --bg2: var(--m-bg); --bd: var(--m-bd); --ink: var(--m-ink); }
+.blk-summary ul { list-style: none; padding-left: 0; }
+.blk-summary li { position: relative; padding-left: 1.5em; margin: .45em 0; }
+.blk-summary li::before { content: ""; position: absolute; left: .2em; top: .62em; width: .7em; height: .38em; border-left: 2px solid var(--m-bd); border-bottom: 2px solid var(--m-bd); transform: rotate(-45deg); }
+.blk-figure { margin-left: 0; margin-right: 0; --bd: var(--muted); border-style: dashed; border-left-style: solid; background: var(--surface); }
+.blk-figure .blk-b { font-size: .94em; color: var(--muted); }
+.blk-other { --bd: var(--muted); }
+.blk-source { --bd: var(--line); background: transparent; border: 0; border-top: 1px solid var(--line); border-radius: 0; padding: 1em 0 0; margin-top: 2.2em; font-size: 13px; line-height: 1.7; color: var(--muted); }
+.blk-source .blk-h { color: var(--muted); }
+.blk-source ul { padding-left: 1.1em; }
+.blk-source a { overflow-wrap: anywhere; word-break: break-all; }
+
+/* quiz */
+.blk-quiz { --bg2: var(--surface); --bd: var(--accent); --ink: var(--accent); }
+.quiz-item + .quiz-item { margin-top: 1.4em; padding-top: 1.2em; border-top: 1px dashed var(--line); }
+.quiz-q { font-weight: 600; margin-bottom: .7em; }
+.qno { display: inline-block; margin-right: .5em; color: var(--accent); font-weight: 700; }
+.choices { display: grid; gap: 8px; }
+.choice {
+  display: grid; grid-template-columns: 1.9em 1fr auto; align-items: center; gap: 10px;
+  width: 100%; min-height: 50px; padding: 9px 12px; text-align: left;
+  border: 1.5px solid var(--line); border-radius: 12px; background: var(--bg);
+  cursor: pointer; line-height: 1.6; font-size: .95em;
+}
+.choice .mk { display: inline-flex; align-items: center; justify-content: center; width: 1.9em; height: 1.9em; border-radius: 50%; background: var(--surface2); font-size: 13px; font-weight: 700; color: var(--muted); }
+.choice .badge { display: none; font-size: 12px; font-weight: 700; color: var(--ok-bd); border: 1px solid var(--ok-bd); border-radius: 99px; padding: 1px 8px; white-space: nowrap; }
+.choice:active { background: var(--surface2); }
+.quiz-item.done .choice { cursor: default; opacity: .55; }
+.quiz-item.done .choice[data-c] { opacity: 1; border-color: var(--ok-bd); background: var(--ok-bg); }
+.quiz-item.done .choice[data-c] .mk { background: var(--ok-bd); color: var(--bg); }
+.quiz-item.done .choice[data-c] .badge { display: inline-block; }
+.quiz-item.done .choice.picked:not([data-c]) { opacity: 1; border-color: var(--ng-bd); background: var(--ng-bg); }
+.quiz-item.done .choice.picked:not([data-c]) .mk { background: var(--ng-bd); color: var(--bg); }
+.quiz-ex { display: none; margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: var(--surface2); font-size: .94em; }
+.quiz-item.done .quiz-ex { display: block; animation: fade .25s ease; }
+.verdict { font-weight: 700; margin-bottom: .4em; }
+.verdict.ok { color: var(--ok-bd); }
+.verdict.ng { color: var(--ng-bd); }
+.exl { display: inline-block; font-size: 12px; font-weight: 700; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 0 6px; margin-right: .5em; line-height: 1.6; vertical-align: .1em; }
+.quiz-retry { margin-top: 4px; min-height: 40px; padding: 6px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-size: 13.5px; cursor: pointer; }
+@keyframes fade { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+/* end of episode */
+.ep-end { margin: 2.6em 0 0; padding: 18px 0 0; border-top: 1px solid var(--line); display: grid; gap: 12px; }
+.ep-end .done-line { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); }
+.ep-end .done-line svg { width: 22px; height: 22px; color: var(--accent); }
+.next-card { display: block; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); text-decoration: none; line-height: 1.55; }
+.next-card small { display: block; font-size: 12px; color: var(--muted); letter-spacing: .06em; margin-bottom: 2px; }
+.next-card b { font-size: 16px; }
+.next-card span { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; }
+.btn.ghost { background: transparent; color: var(--muted); font-weight: 500; font-size: 14px; min-height: 44px; }
+
+/* ===== glossary ===== */
+.g-index { position: sticky; top: var(--top-h); z-index: 5; display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 0; background: var(--bg); border-bottom: 1px solid var(--line); margin-bottom: 4px; }
+.g-index button { min-width: 40px; min-height: 40px; padding: 0 8px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-size: 14px; cursor: pointer; }
+.g-group h2 { font-size: 14px; color: var(--accent); margin: 22px 0 4px; letter-spacing: .1em; scroll-margin-top: calc(var(--top-h) + 64px); }
+.g-list { margin: 0; }
+.g-item { padding: 12px 0; border-bottom: 1px solid var(--line); scroll-margin-top: calc(var(--top-h) + 64px); border-radius: 6px; transition: background .6s; }
+.g-item dt { font-weight: 700; font-size: 1.02em; line-height: 1.5; }
+.g-item dt small { font-weight: 400; color: var(--muted); font-size: 12px; margin-left: .6em; }
+.g-item dd { margin: 4px 0 0; font-size: .95em; line-height: 1.8; }
+.g-item.flash { background: var(--accent-soft); }
+.empty { color: var(--muted); padding: 24px 0; text-align: center; font-size: 15px; }
+
+/* ===== search ===== */
+.search-box { position: sticky; top: var(--top-h); z-index: 5; background: var(--bg); padding: 12px 0 10px; }
+.search-box label { display: flex; align-items: center; gap: 8px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface); padding: 0 12px; }
+.search-box label:focus-within { border-color: var(--accent); }
+.search-box svg { width: 20px; height: 20px; color: var(--muted); flex: none; }
+.search-box input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: inherit; font-size: 16px; height: 48px; }
+.s-count { font-size: 13px; color: var(--muted); margin: 6px 0 4px; }
+.s-sec { font-size: 13px; color: var(--muted); margin: 18px 0 2px; font-weight: 600; letter-spacing: .06em; }
+.s-hit { display: block; padding: 12px 2px; border-bottom: 1px solid var(--line); color: var(--text); text-decoration: none; line-height: 1.65; }
+.s-hit b { font-size: 15px; }
+.s-hit small { color: var(--muted); font-size: 12px; margin-left: .4em; }
+.s-hit p { margin: 4px 0 0; font-size: 13.5px; color: var(--muted); }
+mark { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 1px; }
+
+/* ===== sheet / toast ===== */
+.sheet-wrap { position: fixed; inset: 0; z-index: 50; }
+.sheet-wrap[hidden] { display: none; }
+.sheet-bg { position: absolute; inset: 0; background: rgba(10,10,10,.38); animation: fade .2s ease; }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; max-width: 680px; margin: 0 auto; max-height: 72vh; overflow: auto; background: var(--surface); border-radius: 18px 18px 0 0; padding: 8px 20px calc(16px + var(--safe-b)); box-shadow: var(--shadow); animation: up .22s ease; }
+.sheet-grip { width: 40px; height: 4px; border-radius: 99px; background: var(--line); margin: 4px auto 10px; }
+.sheet h2 { font-size: 1.15rem; margin: 0 0 8px; }
+.sheet h2 small { font-size: 12px; color: var(--muted); font-weight: 400; margin-left: .6em; }
+.sheet-body { line-height: 1.85; margin-bottom: 16px; }
+.sheet-act { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@keyframes up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.toast { position: fixed; left: 50%; bottom: calc(var(--bot-h) + var(--safe-b) + 16px); transform: translate(-50%, 8px); z-index: 60; background: var(--text); color: var(--bg); font-size: 14px; padding: 8px 16px; border-radius: 99px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; white-space: nowrap; max-width: calc(100vw - 32px); overflow: hidden; text-overflow: ellipsis; }
+.toast.show { opacity: .94; transform: translate(-50%, 0); }
+
+/* ===== print-mode (?print=1) ===== */
+.print-mode .top, .print-mode .bottom, .print-mode .readbar { display: none; }
+.print-mode main { padding-bottom: 40px; }
+.pr-cover { min-height: 60vh; display: flex; flex-direction: column; justify-content: center; }
+.pr-cover h1 { font-size: 2rem; margin: 0 0 12px; }
+.pr-toc ol { list-style: none; padding: 0; margin: 0; }
+.pr-toc li { display: flex; gap: 8px; padding: 3px 0; font-size: .92em; line-height: 1.6; }
+.pr-toc li .n { color: var(--muted); width: 3.2em; flex: none; }
+.pr-toc li .m { margin-left: auto; color: var(--muted); white-space: nowrap; }
+.pr-sec { margin-top: 48px; }
+.print-mode .ep-end, .print-mode .quiz-retry { display: none; }
+.print-mode .quiz-ex { display: block; }
+.print-mode .choice[data-c] { border-color: var(--ok-bd); background: var(--ok-bg); }
+.print-mode .choice[data-c] .badge { display: inline-block; }
+.print-mode .verdict { display: none; }
+
+@media print {
+  :root, :root[data-theme="dark"], :root:not([data-theme="light"]) {
+    --bg: #fff; --surface: #fff; --surface2: #f2f0eb; --text: #1e1d1b; --muted: #555; --line: #ccc; --accent: #2f5f69; --accent-soft: #eef4f5;
+    --q-bg: #f1f4f8; --q-bd: #6c84a6; --q-ink: #34506f;
+    --a-bg: #eff5f0; --a-bd: #5a8a63; --a-ink: #335c3b;
+    --w-bg: #f8f3e7; --w-bd: #a9832f; --w-ink: #6e5016;
+    --s-bg: #f3f1f7; --s-bd: #8270a5; --s-ink: #4f416d;
+    --c-bg: #f9f0ed; --c-bd: #ad6250; --c-ink: #7d3c2e;
+    --m-bg: #edf5f4; --m-bd: #46817f; --m-ink: #2b5c5a;
+    --ok-bg: #e8f3ea; --ok-bd: #3f7a4b; --mark: #f2e2a8;
+    --fs: 10.5pt;
+    color-scheme: light;
+  }
+  @page { size: A5; margin: 14mm 13mm 16mm; }
+  body { line-height: 1.75; background: #fff; }
+  .top, .bottom, .readbar, .sheet-wrap, .toast, .ep-end, .quiz-retry, .g-index, .search-box, .resume-card, .cover .acts { display: none !important; }
+  main { max-width: none; padding: 0; }
+  .ep { break-before: page; page-break-before: always; padding-top: 0; }
+  .ep-meta { margin-top: 0; }
+  .blk, .table-wrap, .quiz-item, .g-item, figure { break-inside: avoid; page-break-inside: avoid; }
+  h2, h3 { break-after: avoid; page-break-after: avoid; }
+  .table-wrap { overflow: visible; }
+  .table-wrap th, .table-wrap td { word-break: normal; overflow-wrap: anywhere; }
+  .term { color: inherit; text-decoration: none; }
+  .quiz-ex { display: block !important; background: #f6f5f1; }
+  .verdict { display: none; }
+  .choice { opacity: 1 !important; min-height: 0; padding: 5px 10px; background: #fff; }
+  .choice[data-c] { border-color: var(--ok-bd); background: var(--ok-bg); }
+  .choice[data-c] .badge { display: inline-block; }
+  .blk-source a { color: inherit; text-decoration: none; }
+  .pr-sec, .pr-gloss { break-before: page; page-break-before: always; }
+  .cover, .pr-cover { min-height: 0; padding-top: 30mm; }
+  strong { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .blk, .choice, .quiz-ex, mark, thead th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+</style>
+</head>
+<body>
+<header class="top" id="top"></header>
+<div class="readbar" id="readbar" aria-hidden="true"><i></i></div>
+<main id="view" tabindex="-1"></main>
+<nav class="bottom" id="bottom" aria-label="ページ移動"></nav>
+<div class="sheet-wrap" id="sheet" hidden>
+  <div class="sheet-bg" data-act="sheet-close"></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <h2 id="sheet-title"></h2>
+    <div class="sheet-body" id="sheet-body"></div>
+    <div class="sheet-act">
+      <a class="btn" id="sheet-more" href="#/glossary">用語集で見る</a>
+      <button type="button" class="btn primary" data-act="sheet-close">閉じる</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<noscript><p style="padding:24px">このページを読むには JavaScript を有効にしてください。</p></noscript>
+<script type="application/json" id="book-data">{"book":{"title":"投資の「なぜ」がわかる本","subtitle":"1話3〜5分。根っこの理由から理解する、はじめての資産形成","audience":"大学1年生のための入門書"},"parts":{"0":"はじめに","1":"お金と経済の根っこ","2":"家計の土台をつくる","3":"投資の考え方","4":"金融商品を知る","5":"税金と制度","6":"はじめてみる","7":"心と罠","8":"その先へ"},"episodes":[{"no":1,"part":0,"title":"この本の歩き方","subtitle":"7週間の学習プランと「なぜ」を大切にする理由","minutes":3,"html":"\u003csection class=\"blk blk-question\">\u003cdiv class=\"blk-h\">\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003ccircle cx=\"12\" cy=\"12\" r=\"9\"/>\u003cpath d=\"M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.6\"/>\u003ccircle cx=\"12\" cy=\"16.9\" r=\".5\" fill=\"currentColor\"/>\u003c/svg>\u003cspan>今日の疑問\u003c/span>\u003c/div>\u003cdiv class=\"blk-b\">\u003cp>投資の本はたくさんあります。なぜ「なぜ」にこだわる本を読むのでしょうか。\u003c/p>\u003c/div>\u003c/section>\n\u003csection class=\"blk blk-answer\">\u003cdiv class=\"blk-h\">\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003ccircle cx=\"12\" cy=\"12\" r=\"9\"/>\u003cpath d=\"M8 12.4l2.7 2.7L16.2 9.6\"/>\u003c/svg>\u003cspan>先に結論\u003c/span>\u003c/div>\u003cdiv class=\"blk-b\">\u003cp>理由がわかると、相場が荒れたときにも判断がぶれにくくなるからです。\u003c/p>\u003c/div>\u003c/section>\n\u003ch2>この本の進め方\u003c/h2>\n\u003cp>1日1話、約3〜5分で読めるように作っています。\u003cstrong>7週間\u003c/strong>で全50話を読み終える計算です。\u003c/p>\n\u003col>\u003cli>第1部で、お金と経済の根っこを知ります。\u003c/li>\u003cli>第2部で、家計の土台をつくります。\u003c/li>\u003cli>第3部以降で、\u003cspan class=\"term\" role=\"button\" tabindex=\"0\" data-term=\"投資信託\">投資信託\u003c/span>や\u003cspan class=\"term\" role=\"button\" tabindex=\"0\" data-term=\"NISA\">NISA\u003c/span>などの具体的な道具を学びます。\u003c/li>\u003c/ol>\n\u003ch3>1週間の目安\u003c/h3>\n\u003cdiv class=\"table-wrap\">\u003ctable>\u003cthead>\u003ctr>\u003cth>曜日\u003c/th>\u003cth>内容\u003c/th>\u003cth>時間\u003c/th>\u003c/tr>\u003c/thead>\u003ctbody>\u003ctr>\u003ctd>月〜金\u003c/td>\u003ctd>1日1話\u003c/td>\u003ctd>約4分\u003c/td>\u003c/tr>\u003ctr>\u003ctd>土\u003c/td>\u003ctd>復習クイズ\u003c/td>\u003ctd>約10分\u003c/td>\u003c/tr>\u003ctr>\u003ctd>日\u003c/td>\u003ctd>休み\u003c/td>\u003ctd>0分\u003c/td>\u003c/tr>\u003c/tbody>\u003c/table>\u003c/div>\n\u003csection class=\"blk blk-why\">\u003cdiv class=\"blk-h\">\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M9.2 18h5.6M10.2 21h3.6\"/>\u003cpath d=\"M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.2 1.1 2V16h5v-.2c0-.8.4-1.5 1.1-2A6 6 0 0 0 12 3z\"/>\u003c/svg>\u003cspan>なぜそうなるのか\u003c/span>\u003c/div>\u003cdiv class=\"blk-b\">\u003cp>「そういうものだから」と覚えた知識は、状況が変わると使えません。根っこの理由を知っていれば、新しい状況にも応用できます。\u003c/p>\u003c/div>\u003c/section>\n\u003csection class=\"blk blk-student\">\u003cdiv class=\"blk-h\">\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M2.5 9.5L12 5l9.5 4.5L12 14z\"/>\u003cpath d=\"M6.5 11.6v3.9c1.5 1.4 3.5 2.1 5.5 2.1s4-.7 5.5-2.1v-3.9\"/>\u003cpath d=\"M21.5 9.5v5\"/>\u003c/svg>\u003cspan>大学1年生・20万円の場合\u003c/span>\u003c/div>\u003cdiv class=\"blk-b\">\u003cp>手元の20万円を、すぐに全部使う必要はありません。まずは読み終えるまでの7週間、預金のままで大丈夫です。\u003c/p>\u003c/div>\u003c/section>\n\u003csection class=\"blk blk-summary\">\u003cdiv class=\"blk-h\">\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M9 7h11M9 12h11M9 17h11\"/>\u003cpath d=\"M4 7l1 1 1.7-2M4 12l1 1 1.7-2M4 17l1 1 1.7-2\"/>\u003c/svg>\u003cspan>まとめ\u003c/span>\u003c/div>\u003cdiv class=\"blk-b\">\u003cul>\u003cli>1話3〜5分、7週間で読み終えます\u003c/li>\u003cli>「なぜ」を知ると判断がぶれにくくなります\u003c/li>\u003cli>急いで投資を始める必要はありません\u003c/li>\u003c/ul>\u003c/div>\u003c/section>\n\u003csection class=\"blk blk-quiz\">\u003cdiv class=\"blk-h\">\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M4.5 4.5h15v11h-9l-4.5 4v-4h-1.5z\"/>\u003cpath d=\"M10.2 8.6a1.9 1.9 0 1 1 2.6 1.8c-.5.2-.8.6-.8 1.1v.3\"/>\u003ccircle cx=\"12\" cy=\"13.4\" r=\".45\" fill=\"currentColor\"/>\u003c/svg>\u003cspan>確認クイズ\u003c/span>\u003c/div>\u003cdiv class=\"blk-b\">\u003cdiv class=\"quiz-item\">\u003cp class=\"quiz-q\">\u003cspan class=\"qno\">Q\u003c/span>この本が「なぜ」を大切にする理由として、最も近いものはどれですか。\u003c/p>\u003cdiv class=\"choices\">\u003cbutton type=\"button\" class=\"choice\">\u003cspan class=\"mk\">A\u003c/span>\u003cspan class=\"tx\">難しい言葉を覚えるため\u003c/span>\u003cspan class=\"badge\">正解\u003c/span>\u003c/button>\u003cbutton type=\"button\" class=\"choice\" data-c=\"1\">\u003cspan class=\"mk\">B\u003c/span>\u003cspan class=\"tx\">状況が変わっても判断に応用できるため\u003c/span>\u003cspan class=\"badge\">正解\u003c/span>\u003c/button>\u003cbutton type=\"button\" class=\"choice\">\u003cspan class=\"mk\">C\u003c/span>\u003cspan class=\"tx\">短期間で大きく儲けるため\u003c/span>\u003cspan class=\"badge\">正解\u003c/span>\u003c/button>\u003c/div>\u003cdiv class=\"quiz-ex\" aria-live=\"polite\">\u003cp class=\"verdict\">\u003c/p>\u003cp class=\"ex\">\u003cspan class=\"exl\">解説\u003c/span>理由を理解した知識は、新しい状況にも応用できます。短期の利益を約束するものではありません。\u003c/p>\u003cbutton type=\"button\" class=\"quiz-retry\">もう一度解く\u003c/button>\u003c/div>\u003c/div>\u003c/div>\u003c/section>\n\u003caside class=\"blk blk-source\">\u003cdiv class=\"blk-h\">\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z\"/>\u003cpath d=\"M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3\"/>\u003c/svg>\u003cspan>出典\u003c/span>\u003c/div>\u003cdiv class=\"blk-b\">\u003cul>\u003cli>金融庁「NISA特設ウェブサイト」 \u003ca href=\"https://www.fsa.go.jp/policy/nisa2/\" target=\"_blank\" rel=\"noopener noreferrer\">https://www.fsa.go.jp/policy/nisa2/\u003c/a>\u003c/li>\u003c/ul>\u003c/div>\u003c/aside>","text":"今日の疑問 投資の本はたくさんあります。なぜ「なぜ」にこだわる本を読むのでしょうか。 先に結論 理由がわかると、相場が荒れたときにも判断がぶれにくくなるからです。 この本の進め方 1日1話、約3〜5分で読めるように作っています。 7週間 で全50話を読み終える計算です。 第1部で、お金と経済の根っこを知ります。 第2部で、家計の土台をつくります。 第3部以降で、 投資信託 や NISA などの具体的な道具を学びます。 1週間の目安 曜日 内容 時間 月〜金 1日1話 約4分 土 復習クイズ 約10分 日 休み 0分 なぜそうなるのか 「そういうものだから」と覚えた知識は、状況が変わると使えません。根っこの理由を知っていれば、新しい状況にも応用できます。 大学1年生・20万円の場合 手元の20万円を、すぐに全部使う必要はありません。まずは読み終えるまでの7週間、預金のままで大丈夫です。 まとめ 1話3〜5分、7週間で読み終えます 「なぜ」を知ると判断がぶれにくくなります 急いで投資を始める必要はありません 確認クイズ Q この本が「なぜ」を大切にする理由として、最も近いものはどれですか。 A 難しい言葉を覚えるため 正解 B 状況が変わっても判断に応用できるため 正解 C 短期間で大きく儲けるため 正解 解説 理由を理解した知識は、新しい状況にも応用できます。短期の利益を約束するものではありません。 もう一度解く"},{"no":4,"part":1,"title":"金利とは何か","subtitle":"なぜお金を貸すと「お礼」がもらえるのか","minutes":4,"html":"\u003csection class=\"blk blk-question\">\u003cdiv class=\"blk-h\">\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003ccircle cx=\"12\" cy=\"12\" r=\"9\"/>\u003cpath d=\"M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.6\"/>\u003ccircle cx=\"12\" cy=\"16.9\" r=\".5\" fill=\"currentColor\"/>\u003c/svg>\u003cspan>今日の疑問\u003c/span>\u003c/div>\u003cdiv class=\"blk-b\">\u003cp>銀行にお金を預けると、なぜ少しだけ増えるのでしょうか。\u003c/p>\u003c/div>\u003c/section>\n\u003csection class=\"blk blk-answer\">\u003cdiv class=\"blk-h\">\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003ccircle cx=\"12\" cy=\"12\" r=\"9\"/>\u003cpath d=\"M8 12.4l2.7 2.7L16.2 9.6\"/>\u003c/svg>\u003cspan>先に結論\u003c/span>\u003c/div>\u003cdiv class=\"blk-b\">\u003cp>お金を貸す人は「今使える自由」を手放します。その対価が\u003cstrong>金利\u003c/strong>です。\u003c/p>\u003c/div>\u003c/section>\n\u003ch2>金利は「時間の値段」\u003c/h2>\n\u003cp>\u003cspan class=\"term\" role=\"button\" tabindex=\"0\" data-term=\"金利\">金利\u003c/span>とは、お金を借りるときに払う使用料のことです。貸す側から見ると、受け取るお礼になります。\u003c/p>\n\u003cul>\u003cli>今すぐ使えるお金には価値があります\u003c/li>\u003cli>将来まで待つと、その間は使えません\u003c/li>\u003cli>待つ代わりに上乗せされるのが金利です\u003c/li>\u003c/ul>\n\u003ch3>計算してみる\u003c/h3>\n\u003cp>20万円を年1%で1年預けると、20万円 × 1.01 = 20万2,000円になります。税金がかかるので、実際の手取りはもう少し少なくなります。\u003c/p>\n\u003cfigure class=\"blk blk-figure\">\u003cdiv class=\"blk-h\">\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M4 4v16h16\"/>\u003cpath d=\"M7.5 15.5l3.5-4.5 3 2.5 4.5-6\"/>\u003c/svg>\u003cspan>図解\u003c/span>\u003c/div>\u003cdiv class=\"blk-b\">\u003cp>横軸に年数、縦軸に金額。年1%と年5%の2本の線が、年数とともに開いていく様子。\u003c/p>\u003c/div>\u003c/figure>\n\u003csection class=\"blk blk-why\">\u003cdiv class=\"blk-h\">\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M9.2 18h5.6M10.2 21h3.6\"/>\u003cpath d=\"M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.2 1.1 2V16h5v-.2c0-.8.4-1.5 1.1-2A6 6 0 0 0 12 3z\"/>\u003c/svg>\u003cspan>なぜそうなるのか\u003c/span>\u003c/div>\u003cdiv class=\"blk-b\">\u003cp>人は一般に、同じ金額なら「今」もらうほうを好みます。将来は不確実で、今なら使い道を自由に選べるからです。この好みがあるため、待つ人にはお礼が必要になります。\u003c/p>\u003c/div>\u003c/section>\n\u003csection class=\"blk blk-student\">\u003cdiv class=\"blk-h\">\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M2.5 9.5L12 5l9.5 4.5L12 14z\"/>\u003cpath d=\"M6.5 11.6v3.9c1.5 1.4 3.5 2.1 5.5 2.1s4-.7 5.5-2.1v-3.9\"/>\u003cpath d=\"M21.5 9.5v5\"/>\u003c/svg>\u003cspan>大学1年生・20万円の場合\u003c/span>\u003c/div>\u003cdiv class=\"blk-b\">\u003cp>20万円を年0.2%の普通預金に1年置くと、利息は約400円です。税引き後はさらに少なくなります。\u003c/p>\u003c/div>\u003c/section>\n\u003csection class=\"blk blk-caution\">\u003cdiv class=\"blk-h\">\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M12 3.8L2.9 19.5h18.2z\"/>\u003cpath d=\"M12 10v4.4\"/>\u003ccircle cx=\"12\" cy=\"16.9\" r=\".5\" fill=\"currentColor\"/>\u003c/svg>\u003cspan>注意・よくある誤解\u003c/span>\u003c/div>\u003cdiv class=\"blk-b\">\u003cp>金利が高い商品ほど、何らかのリスクを抱えていることが多いです。「高金利で安全」という話は疑ってかかりましょう。\u003c/p>\u003c/div>\u003c/section>\n\u003csection class=\"blk blk-summary\">\u003cdiv class=\"blk-h\">\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M9 7h11M9 12h11M9 17h11\"/>\u003cpath d=\"M4 7l1 1 1.7-2M4 12l1 1 1.7-2M4 17l1 1 1.7-2\"/>\u003c/svg>\u003cspan>まとめ\u003c/span>\u003c/div>\u003cdiv class=\"blk-b\">\u003cul>\u003cli>金利は「時間の値段」です\u003c/li>\u003cli>待つ人へのお礼として金利が生まれます\u003c/li>\u003cli>高すぎる金利にはリスクが隠れています\u003c/li>\u003c/ul>\u003c/div>\u003c/section>\n\u003csection class=\"blk blk-quiz\">\u003cdiv class=\"blk-h\">\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M4.5 4.5h15v11h-9l-4.5 4v-4h-1.5z\"/>\u003cpath d=\"M10.2 8.6a1.9 1.9 0 1 1 2.6 1.8c-.5.2-.8.6-.8 1.1v.3\"/>\u003ccircle cx=\"12\" cy=\"13.4\" r=\".45\" fill=\"currentColor\"/>\u003c/svg>\u003cspan>確認クイズ\u003c/span>\u003c/div>\u003cdiv class=\"blk-b\">\u003cdiv class=\"quiz-item\">\u003cp class=\"quiz-q\">\u003cspan class=\"qno\">Q\u003c/span>金利が生まれる根本的な理由はどれですか。\u003c/p>\u003cdiv class=\"choices\">\u003cbutton type=\"button\" class=\"choice\">\u003cspan class=\"mk\">A\u003c/span>\u003cspan class=\"tx\">銀行が親切だから\u003c/span>\u003cspan class=\"badge\">正解\u003c/span>\u003c/button>\u003cbutton type=\"button\" class=\"choice\" data-c=\"1\">\u003cspan class=\"mk\">B\u003c/span>\u003cspan class=\"tx\">今使える自由を手放す対価だから\u003c/span>\u003cspan class=\"badge\">正解\u003c/span>\u003c/button>\u003cbutton type=\"button\" class=\"choice\">\u003cspan class=\"mk\">C\u003c/span>\u003cspan class=\"tx\">法律で決まっているから\u003c/span>\u003cspan class=\"badge\">正解\u003c/span>\u003c/button>\u003c/div>\u003cdiv class=\"quiz-ex\" aria-live=\"polite\">\u003cp class=\"verdict\">\u003c/p>\u003cp class=\"ex\">\u003cspan class=\"exl\">解説\u003c/span>貸す人は今使える自由を手放します。その対価として金利を受け取ります。\u003c/p>\u003cbutton type=\"button\" class=\"quiz-retry\">もう一度解く\u003c/button>\u003c/div>\u003c/div>\u003c/div>\u003c/section>\n\u003caside class=\"blk blk-source\">\u003cdiv class=\"blk-h\">\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z\"/>\u003cpath d=\"M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3\"/>\u003c/svg>\u003cspan>出典\u003c/span>\u003c/div>\u003cdiv class=\"blk-b\">\u003cul>\u003cli>日本銀行「教えて にちぎん」 \u003ca href=\"https://www.boj.or.jp/about/education/oshiete/index.htm\" target=\"_blank\" rel=\"noopener noreferrer\">https://www.boj.or.jp/about/education/oshiete/index.htm\u003c/a>\u003c/li>\u003c/ul>\u003c/div>\u003c/aside>","text":"今日の疑問 銀行にお金を預けると、なぜ少しだけ増えるのでしょうか。 先に結論 お金を貸す人は「今使える自由」を手放します。その対価が 金利 です。 金利は「時間の値段」 金利 とは、お金を借りるときに払う使用料のことです。貸す側から見ると、受け取るお礼になります。 今すぐ使えるお金には価値があります 将来まで待つと、その間は使えません 待つ代わりに上乗せされるのが金利です 計算してみる 20万円を年1%で1年預けると、20万円 × 1.01 = 20万2,000円になります。税金がかかるので、実際の手取りはもう少し少なくなります。 図解 横軸に年数、縦軸に金額。年1%と年5%の2本の線が、年数とともに開いていく様子。 なぜそうなるのか 人は一般に、同じ金額なら「今」もらうほうを好みます。将来は不確実で、今なら使い道を自由に選べるからです。この好みがあるため、待つ人にはお礼が必要になります。 大学1年生・20万円の場合 20万円を年0.2%の普通預金に1年置くと、利息は約400円です。税引き後はさらに少なくなります。 注意・よくある誤解 金利が高い商品ほど、何らかのリスクを抱えていることが多いです。「高金利で安全」という話は疑ってかかりましょう。 まとめ 金利は「時間の値段」です 待つ人へのお礼として金利が生まれます 高すぎる金利にはリスクが隠れています 確認クイズ Q 金利が生まれる根本的な理由はどれですか。 A 銀行が親切だから 正解 B 今使える自由を手放す対価だから 正解 C 法律で決まっているから 正解 解説 貸す人は今使える自由を手放します。その対価として金利を受け取ります。 もう一度解く"},{"no":5,"part":1,"title":"複利のしくみ","subtitle":"利息が利息を生む、72の法則","minutes":5,"html":"\u003csection class=\"blk blk-question\">\u003cdiv class=\"blk-h\">\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003ccircle cx=\"12\" cy=\"12\" r=\"9\"/>\u003cpath d=\"M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.6\"/>\u003ccircle cx=\"12\" cy=\"16.9\" r=\".5\" fill=\"currentColor\"/>\u003c/svg>\u003cspan>今日の疑問\u003c/span>\u003c/div>\u003cdiv class=\"blk-b\">\u003cp>「複利はすごい」とよく聞きます。何がそんなにすごいのですか。\u003c/p>\u003c/div>\u003c/section>\n\u003csection class=\"blk blk-answer\">\u003cdiv class=\"blk-h\">\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003ccircle cx=\"12\" cy=\"12\" r=\"9\"/>\u003cpath d=\"M8 12.4l2.7 2.7L16.2 9.6\"/>\u003c/svg>\u003cspan>先に結論\u003c/span>\u003c/div>\u003cdiv class=\"blk-b\">\u003cp>増えた分がさらに増える、という性質が時間とともに大きな差を生みます。\u003c/p>\u003c/div>\u003c/section>\n\u003ch2>単利と複利\u003c/h2>\n\u003cp>\u003cspan class=\"term\" role=\"button\" tabindex=\"0\" data-term=\"単利\">単利\u003c/span>は元本にだけ利息がつきます。\u003cspan class=\"term\" role=\"button\" tabindex=\"0\" data-term=\"複利\">複利\u003c/span>は利息にも利息がつきます。未登録の用語もここで使ってみます。\u003c/p>\n\u003cdiv class=\"table-wrap\">\u003ctable>\u003cthead>\u003ctr>\u003cth>年数\u003c/th>\u003cth>単利5%\u003c/th>\u003cth>複利5%\u003c/th>\u003c/tr>\u003c/thead>\u003ctbody>\u003ctr>\u003ctd>1年\u003c/td>\u003ctd>21万円\u003c/td>\u003ctd>21万円\u003c/td>\u003c/tr>\u003ctr>\u003ctd>10年\u003c/td>\u003ctd>30万円\u003c/td>\u003ctd>約32.6万円\u003c/td>\u003c/tr>\u003ctr>\u003ctd>30年\u003c/td>\u003ctd>50万円\u003c/td>\u003ctd>約86.4万円\u003c/td>\u003c/tr>\u003c/tbody>\u003c/table>\u003c/div>\n\u003ch3>72の法則\u003c/h3>\n\u003cp>72を年利で割ると、お金が約2倍になる年数がわかります。年6%なら72 ÷ 6 = 約12年です。\u003c/p>\n\u003csection class=\"blk blk-why\">\u003cdiv class=\"blk-h\">\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M9.2 18h5.6M10.2 21h3.6\"/>\u003cpath d=\"M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.2 1.1 2V16h5v-.2c0-.8.4-1.5 1.1-2A6 6 0 0 0 12 3z\"/>\u003c/svg>\u003cspan>なぜそうなるのか\u003c/span>\u003c/div>\u003cdiv class=\"blk-b\">\u003cp>複利では、増えた利息が次の年の「元本」に加わります。元本が毎年大きくなるので、同じ利率でも増える額が年々大きくなるのです。\u003c/p>\u003c/div>\u003c/section>\n\u003csection class=\"blk blk-student\">\u003cdiv class=\"blk-h\">\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M2.5 9.5L12 5l9.5 4.5L12 14z\"/>\u003cpath d=\"M6.5 11.6v3.9c1.5 1.4 3.5 2.1 5.5 2.1s4-.7 5.5-2.1v-3.9\"/>\u003cpath d=\"M21.5 9.5v5\"/>\u003c/svg>\u003cspan>大学1年生・20万円の場合\u003c/span>\u003c/div>\u003cdiv class=\"blk-b\">\u003cp>20万円を年5%で30年運用できたとすると、約86万円になる計算です。ただし実際の運用で毎年5%が続く保証はありません。\u003c/p>\u003c/div>\u003c/section>\n\u003csection class=\"blk blk-summary\">\u003cdiv class=\"blk-h\">\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M9 7h11M9 12h11M9 17h11\"/>\u003cpath d=\"M4 7l1 1 1.7-2M4 12l1 1 1.7-2M4 17l1 1 1.7-2\"/>\u003c/svg>\u003cspan>まとめ\u003c/span>\u003c/div>\u003cdiv class=\"blk-b\">\u003cul>\u003cli>複利は利息にも利息がつくしくみです\u003c/li>\u003cli>時間が長いほど単利との差が広がります\u003c/li>\u003cli>72の法則で倍になる年数の目安がわかります\u003c/li>\u003c/ul>\u003c/div>\u003c/section>\n\u003csection class=\"blk blk-quiz\">\u003cdiv class=\"blk-h\">\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M4.5 4.5h15v11h-9l-4.5 4v-4h-1.5z\"/>\u003cpath d=\"M10.2 8.6a1.9 1.9 0 1 1 2.6 1.8c-.5.2-.8.6-.8 1.1v.3\"/>\u003ccircle cx=\"12\" cy=\"13.4\" r=\".45\" fill=\"currentColor\"/>\u003c/svg>\u003cspan>確認クイズ\u003c/span>\u003c/div>\u003cdiv class=\"blk-b\">\u003cdiv class=\"quiz-item\">\u003cp class=\"quiz-q\">\u003cspan class=\"qno\">Q\u003c/span>年利8%で運用すると、お金が約2倍になるのは何年後ですか（72の法則）。\u003c/p>\u003cdiv class=\"choices\">\u003cbutton type=\"button\" class=\"choice\">\u003cspan class=\"mk\">A\u003c/span>\u003cspan class=\"tx\">約6年\u003c/span>\u003cspan class=\"badge\">正解\u003c/span>\u003c/button>\u003cbutton type=\"button\" class=\"choice\" data-c=\"1\">\u003cspan class=\"mk\">B\u003c/span>\u003cspan class=\"tx\">約9年\u003c/span>\u003cspan class=\"badge\">正解\u003c/span>\u003c/button>\u003cbutton type=\"button\" class=\"choice\">\u003cspan class=\"mk\">C\u003c/span>\u003cspan class=\"tx\">約12年\u003c/span>\u003cspan class=\"badge\">正解\u003c/span>\u003c/button>\u003c/div>\u003cdiv class=\"quiz-ex\" aria-live=\"polite\">\u003cp class=\"verdict\">\u003c/p>\u003cp class=\"ex\">\u003cspan class=\"exl\">解説\u003c/span>72 ÷ 8 = 9 なので約9年です。あくまで目安の計算です。\u003c/p>\u003cbutton type=\"button\" class=\"quiz-retry\">もう一度解く\u003c/button>\u003c/div>\u003c/div>\u003c/div>\u003c/section>\n\u003caside class=\"blk blk-source\">\u003cdiv class=\"blk-h\">\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z\"/>\u003cpath d=\"M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3\"/>\u003c/svg>\u003cspan>出典\u003c/span>\u003c/div>\u003cdiv class=\"blk-b\">\u003cul>\u003cli>金融庁「資産運用シミュレーション」 \u003ca href=\"https://www.fsa.go.jp/policy/nisa2/moneyplan_sim/\" target=\"_blank\" rel=\"noopener noreferrer\">https://www.fsa.go.jp/policy/nisa2/moneyplan_sim/\u003c/a>\u003c/li>\u003c/ul>\u003c/div>\u003c/aside>","text":"今日の疑問 「複利はすごい」とよく聞きます。何がそんなにすごいのですか。 先に結論 増えた分がさらに増える、という性質が時間とともに大きな差を生みます。 単利と複利 単利 は元本にだけ利息がつきます。 複利 は利息にも利息がつきます。未登録の用語もここで使ってみます。 年数 単利5% 複利5% 1年 21万円 21万円 10年 30万円 約32.6万円 30年 50万円 約86.4万円 72の法則 72を年利で割ると、お金が約2倍になる年数がわかります。年6%なら72 ÷ 6 = 約12年です。 なぜそうなるのか 複利では、増えた利息が次の年の「元本」に加わります。元本が毎年大きくなるので、同じ利率でも増える額が年々大きくなるのです。 大学1年生・20万円の場合 20万円を年5%で30年運用できたとすると、約86万円になる計算です。ただし実際の運用で毎年5%が続く保証はありません。 まとめ 複利は利息にも利息がつくしくみです 時間が長いほど単利との差が広がります 72の法則で倍になる年数の目安がわかります 確認クイズ Q 年利8%で運用すると、お金が約2倍になるのは何年後ですか（72の法則）。 A 約6年 正解 B 約9年 正解 C 約12年 正解 解説 72 ÷ 8 = 9 なので約9年です。あくまで目安の計算です。 もう一度解く"},{"no":6,"part":1,"title":"エラー確認用の話","subtitle":"","minutes":3,"html":"\u003csection class=\"blk blk-question\">\u003cdiv class=\"blk-h\">\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003ccircle cx=\"12\" cy=\"12\" r=\"9\"/>\u003cpath d=\"M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.6\"/>\u003ccircle cx=\"12\" cy=\"16.9\" r=\".5\" fill=\"currentColor\"/>\u003c/svg>\u003cspan>今日の疑問\u003c/span>\u003c/div>\u003cdiv class=\"blk-b\">\u003cp>これはわざとエラーを含むテスト原稿です！\u003c/p>\u003c/div>\u003c/section>\n\u003csection class=\"blk blk-quiz\">\u003cdiv class=\"blk-h\">\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M4.5 4.5h15v11h-9l-4.5 4v-4h-1.5z\"/>\u003cpath d=\"M10.2 8.6a1.9 1.9 0 1 1 2.6 1.8c-.5.2-.8.6-.8 1.1v.3\"/>\u003ccircle cx=\"12\" cy=\"13.4\" r=\".45\" fill=\"currentColor\"/>\u003c/svg>\u003cspan>確認クイズ\u003c/span>\u003c/div>\u003cdiv class=\"blk-b\">\u003cdiv class=\"quiz-item\">\u003cp class=\"quiz-q\">\u003cspan class=\"qno\">Q\u003c/span>正解がない問題\u003c/p>\u003cdiv class=\"choices\">\u003cbutton type=\"button\" class=\"choice\">\u003cspan class=\"mk\">A\u003c/span>\u003cspan class=\"tx\">選択肢A\u003c/span>\u003cspan class=\"badge\">正解\u003c/span>\u003c/button>\u003cbutton type=\"button\" class=\"choice\">\u003cspan class=\"mk\">B\u003c/span>\u003cspan class=\"tx\">選択肢B\u003c/span>\u003cspan class=\"badge\">正解\u003c/span>\u003c/button>\u003c/div>\u003cdiv class=\"quiz-ex\" aria-live=\"polite\">\u003cp class=\"verdict\">\u003c/p>\u003cp class=\"ex\">\u003cspan class=\"exl\">解説\u003c/span>解説\u003c/p>\u003cbutton type=\"button\" class=\"quiz-retry\">もう一度解く\u003c/button>\u003c/div>\u003c/div>\u003c/div>\u003c/section>\n\u003csection class=\"blk blk-other\">\u003cdiv class=\"blk-h\">\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003crect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"3\"/>\u003cpath d=\"M8 9h8M8 13h6\"/>\u003c/svg>\u003cspan>メモ\u003c/span>\u003c/div>\u003cdiv class=\"blk-b\">\u003cp>未知のブロック\u003c/p>\u003c/div>\u003c/section>\n\u003csection class=\"blk blk-why\">\u003cdiv class=\"blk-h\">\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M9.2 18h5.6M10.2 21h3.6\"/>\u003cpath d=\"M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.2 1.1 2V16h5v-.2c0-.8.4-1.5 1.1-2A6 6 0 0 0 12 3z\"/>\u003c/svg>\u003cspan>なぜそうなるのか\u003c/span>\u003c/div>\u003cdiv class=\"blk-b\">\u003cp>閉じ忘れのブロック\u003c/p>\u003c/div>\u003c/section>","text":"今日の疑問 これはわざとエラーを含むテスト原稿です！ 確認クイズ Q 正解がない問題 A 選択肢A 正解 B 選択肢B 正解 解説 解説 もう一度解く メモ 未知のブロック なぜそうなるのか 閉じ忘れのブロック"}],"glossary":[{"term":"NISA","reading":"","html":"投資の利益に税金がかからない国の制度です。2024年から新しい制度になりました。","text":"投資の利益に税金がかからない国の制度です。2024年から新しい制度になりました。","group":"英数"},{"term":"インフレ","reading":"","html":"物価が全体的に上がり続けることです。お金の価値は相対的に下がります。","text":"物価が全体的に上がり続けることです。お金の価値は相対的に下がります。","group":"あ"},{"term":"金利","reading":"","html":"お金を借りるときの使用料です。年何%という形で表します。","text":"お金を借りるときの使用料です。年何%という形で表します。","group":"その他"},{"term":"単利","reading":"","html":"元本にだけ利息がつくしくみです。","text":"元本にだけ利息がつくしくみです。","group":"その他"},{"term":"投資信託","reading":"","html":"多くの人から集めたお金を、専門家がまとめて運用する商品です。","text":"多くの人から集めたお金を、専門家がまとめて運用する商品です。","group":"その他"},{"term":"複利","reading":"","html":"利息にも利息がつくしくみです。","text":"利息にも利息がつくしくみです。","group":"その他"}],"icons":{"question":"\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003ccircle cx=\"12\" cy=\"12\" r=\"9\"/>\u003cpath d=\"M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.6\"/>\u003ccircle cx=\"12\" cy=\"16.9\" r=\".5\" fill=\"currentColor\"/>\u003c/svg>","answer":"\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003ccircle cx=\"12\" cy=\"12\" r=\"9\"/>\u003cpath d=\"M8 12.4l2.7 2.7L16.2 9.6\"/>\u003c/svg>","why":"\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M9.2 18h5.6M10.2 21h3.6\"/>\u003cpath d=\"M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.2 1.1 2V16h5v-.2c0-.8.4-1.5 1.1-2A6 6 0 0 0 12 3z\"/>\u003c/svg>","student":"\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M2.5 9.5L12 5l9.5 4.5L12 14z\"/>\u003cpath d=\"M6.5 11.6v3.9c1.5 1.4 3.5 2.1 5.5 2.1s4-.7 5.5-2.1v-3.9\"/>\u003cpath d=\"M21.5 9.5v5\"/>\u003c/svg>","caution":"\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M12 3.8L2.9 19.5h18.2z\"/>\u003cpath d=\"M12 10v4.4\"/>\u003ccircle cx=\"12\" cy=\"16.9\" r=\".5\" fill=\"currentColor\"/>\u003c/svg>","summary":"\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M9 7h11M9 12h11M9 17h11\"/>\u003cpath d=\"M4 7l1 1 1.7-2M4 12l1 1 1.7-2M4 17l1 1 1.7-2\"/>\u003c/svg>","quiz":"\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M4.5 4.5h15v11h-9l-4.5 4v-4h-1.5z\"/>\u003cpath d=\"M10.2 8.6a1.9 1.9 0 1 1 2.6 1.8c-.5.2-.8.6-.8 1.1v.3\"/>\u003ccircle cx=\"12\" cy=\"13.4\" r=\".45\" fill=\"currentColor\"/>\u003c/svg>","source":"\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z\"/>\u003cpath d=\"M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3\"/>\u003c/svg>","figure":"\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M4 4v16h16\"/>\u003cpath d=\"M7.5 15.5l3.5-4.5 3 2.5 4.5-6\"/>\u003c/svg>","note":"\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003crect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"3\"/>\u003cpath d=\"M8 9h8M8 13h6\"/>\u003c/svg>","menu":"\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M4 7h16M4 12h16M4 17h10\"/>\u003c/svg>","prev":"\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M14.5 6l-6 6 6 6\"/>\u003c/svg>","next":"\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M9.5 6l6 6-6 6\"/>\u003c/svg>","bookmark":"\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M6.5 3.5h11v17l-5.5-4-5.5 4z\"/>\u003c/svg>","bookmarkOn":"\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"currentColor\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M6.5 3.5h11v17l-5.5-4-5.5 4z\"/>\u003c/svg>","search":"\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003ccircle cx=\"10.5\" cy=\"10.5\" r=\"6\"/>\u003cpath d=\"M15 15l5 5\"/>\u003c/svg>","book":"\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M12 6.5C10 5 7.5 4.5 4 4.5v14c3.5 0 6 .5 8 2 2-1.5 4.5-2 8-2v-14c-3.5 0-6 .5-8 2z\"/>\u003cpath d=\"M12 6.5v14\"/>\u003c/svg>","glossary":"\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z\"/>\u003cpath d=\"M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3\"/>\u003cpath d=\"M9 8h6M9 11.5h4\"/>\u003c/svg>","resume":"\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M12 6.5C10 5 7.5 4.5 4 4.5v14c3.5 0 6 .5 8 2 2-1.5 4.5-2 8-2v-14c-3.5 0-6 .5-8 2z\"/>\u003cpath d=\"M15.5 4.8v6l1.75-1.3L19 10.8v-6\"/>\u003c/svg>","sun":"\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003ccircle cx=\"12\" cy=\"12\" r=\"4\"/>\u003cpath d=\"M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4\"/>\u003c/svg>","moon":"\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z\"/>\u003c/svg>","auto":"\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003ccircle cx=\"12\" cy=\"12\" r=\"8.5\"/>\u003cpath d=\"M12 3.5v17\" />\u003cpath d=\"M12 3.5a8.5 8.5 0 0 1 0 17z\" fill=\"currentColor\"/>\u003c/svg>","check":"\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003ccircle cx=\"12\" cy=\"12\" r=\"9\"/>\u003cpath d=\"M8 12.4l2.7 2.7L16.2 9.6\"/>\u003c/svg>","checkOn":"\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" aria-hidden=\"true\">\u003ccircle cx=\"12\" cy=\"12\" r=\"10\" fill=\"currentColor\"/>\u003cpath d=\"M7.8 12.4l2.8 2.8 5.6-5.6\" fill=\"none\" stroke=\"var(--bg)\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\u003c/svg>","close":"\u003csvg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\u003cpath d=\"M6 6l12 12M18 6L6 18\"/>\u003c/svg>"},"builtAt":"2026-10-24T08:31:25.683Z"}</script>
+<script>
+(function () {
+  'use strict';
+  var D = JSON.parse(document.getElementById('book-data').textContent);
+  var I = D.icons;
+  var EP = D.episodes;
+  var KEY = 'investbook:v1';
+  var root = document.documentElement;
+  var view = document.getElementById('view');
+  var top = document.getElementById('top');
+  var bottom = document.getElementById('bottom');
+  var readbar = document.getElementById('readbar').firstChild;
+
+  // ------------------------------------------------ storage（使えなくても動く）
+  var S = (function () {
+    var mem = {};
+    var ok = false;
+    try {
+      var t = '__ib_test';
+      window.localStorage.setItem(t, '1');
+      window.localStorage.removeItem(t);
+      ok = true;
+      mem = JSON.parse(window.localStorage.getItem(KEY) || '{}') || {};
+      if (typeof mem !== 'object') mem = {};
+    } catch (e) {
+      mem = mem || {};
+    }
+    return {
+      ok: ok,
+      get: function (k, d) { return Object.prototype.hasOwnProperty.call(mem, k) ? mem[k] : d; },
+      set: function (k, v) {
+        mem[k] = v;
+        if (!ok) return;
+        try { window.localStorage.setItem(KEY, JSON.stringify(mem)); } catch (e) { /* 容量超過などは無視 */ }
+      }
+    };
+  })();
+
+  // ------------------------------------------------ helpers
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function norm(s) { return String(s).normalize('NFKC').toLowerCase(); }
+  function idxOf(no) { for (var i = 0; i < EP.length; i++) if (EP[i].no === no) return i; return -1; }
+  function partName(p) { return '第' + p + '部 ' + (D.parts[p] || ''); }
+  function metaLine(e) { return '第' + e.part + '部・第' + e.no + '話・約' + e.minutes + '分'; }
+  function readMap() { return S.get('read', {}); }
+  function isRead(no) { return !!readMap()[no]; }
+  function setRead(no, v) {
+    var m = readMap();
+    if (v) m[no] = Date.now(); else delete m[no];
+    S.set('read', m);
+  }
+  function marks() { return S.get('marks', []); }
+  function markOf(no) { var m = marks(); for (var i = 0; i < m.length; i++) if (m[i].no === no) return m[i]; return null; }
+  function scrollRatio() {
+    var h = document.documentElement.scrollHeight - window.innerHeight;
+    return h > 0 ? Math.min(1, Math.max(0, window.scrollY / h)) : 0;
+  }
+  function scrollToRatio(r) {
+    var h = document.documentElement.scrollHeight - window.innerHeight;
+    window.scrollTo(0, Math.round(h * r));
+  }
+  function pct(r) { return Math.round(r * 100) + '%'; }
+  function lastEp() {
+    var l = S.get('last', null);
+    if (l == null) return null;
+    var i = idxOf(l);
+    return i < 0 ? null : EP[i];
+  }
+  var toastTimer;
+  function toast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove('show'); }, 1800);
+  }
+  function parseHash() {
+    var h = location.hash.replace(/^#/, '') || '/';
+    var q = '';
+    var k = h.indexOf('?');
+    if (k >= 0) { q = h.slice(k + 1); h = h.slice(0, k); }
+    var params = {};
+    q.split('&').forEach(function (kv) {
+      if (!kv) return;
+      var p = kv.split('=');
+      try { params[decodeURIComponent(p[0])] = decodeURIComponent(p[1] || ''); } catch (e) { /* ignore */ }
+    });
+    return { parts: h.split('/').filter(Boolean), params: params };
+  }
+
+  // ------------------------------------------------ settings
+  var FS_LABEL = ['小', '中', '大'];
+  var TH_LABEL = { auto: '自動（端末の設定）', light: 'ライト', dark: 'ダーク' };
+  function applySettings() {
+    root.setAttribute('data-fs', String(S.get('fs', 1)));
+    var th = S.get('theme', 'auto');
+    if (th === 'light' || th === 'dark') root.setAttribute('data-theme', th);
+    else root.removeAttribute('data-theme');
+  }
+  function themeIcon() {
+    var th = S.get('theme', 'auto');
+    return th === 'light' ? I.sun : th === 'dark' ? I.moon : I.auto;
+  }
+  function cycleFont() {
+    var r = scrollRatio();
+    var fs = (Number(S.get('fs', 1)) + 1) % 3;
+    S.set('fs', fs);
+    applySettings();
+    scrollToRatio(r);
+    toast('文字サイズ: ' + FS_LABEL[fs]);
+  }
+  function cycleTheme() {
+    var order = ['auto', 'light', 'dark'];
+    var th = order[(order.indexOf(S.get('theme', 'auto')) + 1) % 3];
+    S.set('theme', th);
+    applySettings();
+    var b = document.querySelector('[data-act="theme"]');
+    if (b) b.innerHTML = themeIcon();
+    toast('表示: ' + TH_LABEL[th]);
+  }
+
+  // ------------------------------------------------ chrome
+  function setTop(title, left) {
+    var l = left === 'none'
+      ? '<a class="ib" href="#/" aria-label="表紙">' + I.book + '</a>'
+      : left === 'cover'
+        ? '<a class="ib" href="#/" aria-label="表紙へ">' + I.book + '</a>'
+        : '<a class="ib" href="#/toc" aria-label="目次へ">' + I.menu + '</a>';
+    top.innerHTML = l +
+      '<div class="ttl">' + esc(title) + '</div>' +
+      '<a class="ib" href="#/search" aria-label="検索">' + I.search + '</a>' +
+      '<button type="button" class="ib" data-act="font" aria-label="文字サイズを変える"><span class="aa">A<b>A</b></span></button>' +
+      '<button type="button" class="ib" data-act="theme" aria-label="表示の明るさを切り替える">' + themeIcon() + '</button>';
+  }
+  function navTabs(active) {
+    var le = lastEp();
+    function tab(id, href, icon, label, dis) {
+      return '<a class="nb' + (active === id ? ' on' : '') + '" href="' + href + '"' + (dis ? ' aria-disabled="true"' : '') + (active === id ? ' aria-current="page"' : '') + '>' + icon + '<span>' + label + '</span></a>';
+    }
+    bottom.className = 'bottom';
+    bottom.innerHTML =
+      tab('toc', '#/toc', I.menu, '目次') +
+      tab('resume', le ? '#/ep/' + le.no + '?resume=1' : '#/toc', I.resume, '続きから', !le) +
+      tab('glossary', '#/glossary', I.glossary, '用語集') +
+      tab('search', '#/search', I.search, '検索');
+  }
+
+  // ------------------------------------------------ views
+  var cleanup = null;
+  function setView(html) {
+    if (cleanup) { cleanup(); cleanup = null; }
+    view.innerHTML = html;
+    readbar.style.width = '0';
+  }
+
+  function cover() {
+    setTop('', 'none');
+    navTabs('');
+    var le = lastEp();
+    var readN = EP.filter(function (e) { return isRead(e.no); }).length;
+    var mins = EP.reduce(function (a, e) { return a + (e.minutes || 0); }, 0);
+    var title = esc(D.book.title).replace('「なぜ」', '<span class="q">「なぜ」</span>');
+    var first = EP[0];
+    var acts = '';
+    if (le) {
+      acts += '<a class="btn primary block" href="#/ep/' + le.no + '?resume=1">' + I.resume + '続きから読む</a>' +
+        '<p class="resume-note">第' + le.no + '話「' + esc(le.title) + '」</p>';
+      acts += '<a class="btn block" href="#/toc">' + I.menu + '目次を見る</a>';
+    } else {
+      if (first) acts += '<a class="btn primary block" href="#/ep/' + first.no + '">' + I.book + 'はじめから読む</a>';
+      acts += '<a class="btn block" href="#/toc">' + I.menu + '目次を見る</a>';
+    }
+    setView(
+      '<section class="cover">' +
+      '<div class="mark">' + I.why + '</div>' +
+      '<p class="aud">' + esc(D.book.audience) + '</p>' +
+      '<h1>' + title + '</h1>' +
+      '<div class="rule"></div>' +
+      '<p class="sub">' + esc(D.book.subtitle) + '</p>' +
+      '<div class="stats"><span>全' + EP.length + '話</span><span>合計 約' + mins + '分</span>' + (readN ? '<span>読了 ' + readN + '話</span>' : '') + '</div>' +
+      '<div class="acts">' + acts + '</div>' +
+      (S.ok ? '' : '<p class="resume-note">この環境では読書の記録を保存できません。ページを閉じると既読やしおりは消えます。</p>') +
+      '</section>'
+    );
+  }
+
+  function toc() {
+    setTop('目次', 'cover');
+    navTabs('toc');
+    var readN = EP.filter(function (e) { return isRead(e.no); }).length;
+    var le = lastEp();
+    var h = '<h1 class="pg-h">目次</h1>';
+    h += '<div class="toc-progress"><div class="meter"><i style="width:' + (EP.length ? (readN / EP.length * 100) : 0) + '%"></i></div>' +
+      '<div class="lbl"><span>読了 ' + readN + ' / ' + EP.length + '話</span><span>' + (EP.length ? Math.round(readN / EP.length * 100) : 0) + '%</span></div></div>';
+    if (le) {
+      h += '<a class="resume-card" href="#/ep/' + le.no + '?resume=1">' + I.resume + '<div><small>続きから読む</small><b>第' + le.no + '話 ' + esc(le.title) + '</b></div></a>';
+    }
+    var ms = marks().filter(function (m) { return idxOf(m.no) >= 0; });
+    if (ms.length) {
+      h += '<div class="part-h">しおり</div><div class="marks">';
+      ms.forEach(function (m) {
+        var e = EP[idxOf(m.no)];
+        h += '<a href="#/ep/' + e.no + '?pos=' + m.pos + '">' + I.bookmarkOn + '<span>第' + e.no + '話 ' + esc(e.title) + '</span><small>' + pct(m.pos) + 'の位置</small></a>';
+      });
+      h += '</div>';
+    }
+    var curPart = null;
+    EP.forEach(function (e) {
+      if (e.part !== curPart) {
+        if (curPart !== null) h += '</ul>';
+        curPart = e.part;
+        h += '<h2 class="part-h"><b>第' + e.part + '部</b>' + esc(D.parts[e.part] || '') + '</h2><ul class="toc-list">';
+      }
+      var rd = isRead(e.no);
+      h += '<li><a href="#/ep/' + e.no + '" class="' + (rd ? 'is-read' : '') + '">' +
+        '<span class="no">' + e.no + '</span>' +
+        '<span><span class="t">' + esc(e.title) + '</span>' + (e.subtitle ? '<span class="s">' + esc(e.subtitle) + '</span>' : '') + '</span>' +
+        '<span class="r">' + (markOf(e.no) ? '<span class="bm" aria-label="しおりあり">' + I.bookmarkOn + '</span>' : '') +
+        '<span>約' + e.minutes + '分</span><span class="ck" aria-label="' + (rd ? '既読' : '未読') + '">' + (rd ? I.checkOn : I.check) + '</span></span>' +
+        '</a></li>';
+    });
+    if (curPart !== null) h += '</ul>';
+    if (!EP.length) h += '<p class="empty">まだ原稿がありません。</p>';
+    setView(h);
+  }
+
+  function episodeHtml(e, forPrint) {
+    return '<article class="ep" data-no="' + e.no + '">' +
+      '<div class="ep-meta">' + esc(metaLine(e)) + '</div>' +
+      '<h1>' + esc(e.title) + '</h1>' +
+      (e.subtitle ? '<p class="ep-sub">' + esc(e.subtitle) + '</p>' : '') +
+      e.html +
+      (forPrint ? '' : endHtml(e)) +
+      '</article>';
+  }
+  function endHtml(e) {
+    var i = idxOf(e.no);
+    var nx = EP[i + 1];
+    var rd = isRead(e.no);
+    var h = '<div class="ep-end" id="ep-end">';
+    h += '<div class="done-line">' + (rd ? I.checkOn + '<span>この話は読了済みです</span>' : I.check + '<span>最後まで読むと読了になります</span>') + '</div>';
+    if (nx) h += '<a class="next-card" href="#/ep/' + nx.no + '" data-act="next"><small>次の話　' + esc(metaLine(nx)) + '</small><b>' + esc(nx.title) + '</b>' + (nx.subtitle ? '<span>' + esc(nx.subtitle) + '</span>' : '') + '</a>';
+    else h += '<a class="next-card" href="#/toc"><small>最後の話です</small><b>目次へ戻る</b></a>';
+    h += '<button type="button" class="btn ghost" data-act="toggle-read">' + (rd ? '未読に戻す' : '読了にする') + '</button>';
+    return h + '</div>';
+  }
+
+  var curNo = null;
+  function episode(no, params) {
+    var i = idxOf(no);
+    if (i < 0) { location.replace('#/toc'); return; }
+    var e = EP[i];
+    var pv = EP[i - 1];
+    var nx = EP[i + 1];
+    curNo = e.no;
+    setTop('第' + e.no + '話 ' + e.title, 'toc');
+    bottom.className = 'bottom ep';
+    var mk = markOf(e.no);
+    bottom.innerHTML =
+      '<a class="nb wide" href="' + (pv ? '#/ep/' + pv.no : '#') + '"' + (pv ? '' : ' aria-disabled="true"') + '>' + I.prev + '<span>前の話</span></a>' +
+      '<a class="nb" href="#/toc">' + I.menu + '<span>目次</span></a>' +
+      '<button type="button" class="nb' + (mk ? ' on' : '') + '" data-act="mark" aria-pressed="' + (mk ? 'true' : 'false') + '">' + (mk ? I.bookmarkOn : I.bookmark) + '<span>しおり</span></button>' +
+      '<a class="nb wide primary" href="' + (nx ? '#/ep/' + nx.no : '#/toc') + '" data-act="next"><span>' + (nx ? '次の話' : '目次へ') + '</span>' + I.next + '</a>';
+    setView(episodeHtml(e, false));
+    S.set('last', e.no);
+
+    // 位置の復元
+    var pos = null;
+    if (params.pos != null) pos = parseFloat(params.pos);
+    else if (params.resume) pos = (S.get('pos', {})[e.no]) || 0;
+    if (pos) requestAnimationFrame(function () { scrollToRatio(pos); updateBar(); });
+    else window.scrollTo(0, 0);
+    if (params.q) highlight(params.q);
+
+    // 読了・位置の保存
+    var end = document.getElementById('ep-end');
+    var io = null;
+    var armed = false;
+    setTimeout(function () { armed = true; }, 800);
+    function reachEnd() {
+      if (!armed || isRead(e.no)) return;
+      setRead(e.no, true);
+      var dl = end.querySelector('.done-line');
+      if (dl) dl.innerHTML = I.checkOn + '<span>読了にしました</span>';
+      var tb = end.querySelector('[data-act="toggle-read"]');
+      if (tb) tb.textContent = '未読に戻す';
+    }
+    if ('IntersectionObserver' in window) {
+      io = new IntersectionObserver(function (ents) {
+        ents.forEach(function (en) { if (en.isIntersecting) reachEnd(); });
+      });
+      io.observe(end);
+    }
+    var t = null;
+    function onScroll() {
+      updateBar();
+      if (t) return;
+      t = setTimeout(function () {
+        t = null;
+        var r = scrollRatio();
+        var p = S.get('pos', {});
+        p[e.no] = Math.round(r * 1000) / 1000;
+        S.set('pos', p);
+        if (!io && r > 0.97) reachEnd();
+      }, 300);
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    cleanup = function () {
+      window.removeEventListener('scroll', onScroll);
+      if (io) io.disconnect();
+      curNo = null;
+    };
+  }
+  function updateBar() { readbar.style.width = (scrollRatio() * 100) + '%'; }
+
+  function highlight(q) {
+    var nq = norm(q);
+    if (!nq) return;
+    var art = view.querySelector('.ep');
+    var w = document.createTreeWalker(art, NodeFilter.SHOW_TEXT, null);
+    var n;
+    while ((n = w.nextNode())) {
+      var k = norm(n.nodeValue).indexOf(nq);
+      if (k >= 0 && n.nodeValue.length === norm(n.nodeValue).length) {
+        var r = document.createRange();
+        r.setStart(n, k);
+        r.setEnd(n, k + q.length);
+        var m = document.createElement('mark');
+        r.surroundContents(m);
+        setTimeout(function () { m.scrollIntoView({ block: 'center' }); }, 50);
+        return;
+      }
+    }
+  }
+
+  function glossary(params) {
+    setTop('用語集', 'toc');
+    navTabs('glossary');
+    var G = D.glossary;
+    var groups = [];
+    var map = {};
+    G.forEach(function (g) {
+      if (!map[g.group]) { map[g.group] = []; groups.push(g.group); }
+      map[g.group].push(g);
+    });
+    var h = '<h1 class="pg-h">用語集</h1><p class="muted" style="font-size:14px;margin:0 0 4px">本文中の点線の語をタップしても説明が出ます。全' + G.length + '語。</p>';
+    if (groups.length > 1) {
+      h += '<div class="g-index">' + groups.map(function (g, i) { return '<button type="button" data-act="gjump" data-g="' + i + '">' + esc(g) + '</button>'; }).join('') + '</div>';
+    }
+    groups.forEach(function (g, i) {
+      h += '<section class="g-group"><h2 id="g-' + i + '">' + esc(g) + '</h2><dl class="g-list">';
+      map[g].forEach(function (it) {
+        h += '<div class="g-item" data-term="' + esc(it.term) + '"><dt>' + esc(it.term) + (it.reading ? '<small>' + esc(it.reading) + '</small>' : '') + '</dt><dd>' + it.html + '</dd></div>';
+      });
+      h += '</dl></section>';
+    });
+    if (!G.length) h += '<p class="empty">用語集はまだありません。</p>';
+    setView(h);
+    window.scrollTo(0, 0);
+    if (params.t) {
+      var items = view.querySelectorAll('.g-item');
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].getAttribute('data-term') === params.t) {
+          var el = items[i];
+          el.scrollIntoView({ block: 'center' });
+          el.classList.add('flash');
+          setTimeout(function () { el.classList.remove('flash'); }, 1600);
+          break;
+        }
+      }
+    }
+  }
+
+  function snippet(text, nq, len) {
+    var nt = norm(text);
+    var out = [];
+    var from = 0;
+    for (var c = 0; c < 2; c++) {
+      var k = nt.indexOf(nq, from);
+      if (k < 0) break;
+      var s = Math.max(0, k - len);
+      var e2 = Math.min(nt.length, k + nq.length + len);
+      out.push((s > 0 ? '…' : '') + esc(nt.slice(s, k)) + '<mark>' + esc(nt.slice(k, k + nq.length)) + '</mark>' + esc(nt.slice(k + nq.length, e2)) + (e2 < nt.length ? '…' : ''));
+      from = e2;
+    }
+    return out;
+  }
+  function countHits(nt, nq) {
+    var n = 0, k = 0;
+    while ((k = nt.indexOf(nq, k)) >= 0) { n++; k += nq.length; }
+    return n;
+  }
+  function search(params) {
+    setTop('検索', 'toc');
+    navTabs('search');
+    setView('<div class="search-box"><label>' + I.search + '<input id="q" type="search" enterkeyhint="search" placeholder="言葉で探す（例: 複利）" autocomplete="off" aria-label="検索語"></label></div><div id="results"></div>');
+    window.scrollTo(0, 0);
+    var input = document.getElementById('q');
+    var res = document.getElementById('results');
+    input.value = params.q || '';
+    var t;
+    function run() {
+      var q = input.value.trim();
+      try { history.replaceState(null, '', '#/search' + (q ? '?q=' + encodeURIComponent(q) : '')); } catch (e) { /* ignore */ }
+      if (!q) { res.innerHTML = '<p class="empty">本文と用語集から探せます。</p>'; return; }
+      var nq = norm(q);
+      var eh = [];
+      EP.forEach(function (e) {
+        var nt = norm(e.title + ' ' + e.subtitle + ' ' + e.text);
+        var c = countHits(nt, nq);
+        if (c) eh.push({ e: e, c: c, sn: snippet(e.text, nq, 24) });
+      });
+      var gh = D.glossary.filter(function (g) { return norm(g.term + ' ' + g.reading + ' ' + g.text).indexOf(nq) >= 0; });
+      var h = '<p class="s-count">' + eh.length + '話・用語' + gh.length + '件が見つかりました</p>';
+      if (gh.length) {
+        h += '<div class="s-sec">用語集</div>';
+        gh.forEach(function (g) {
+          h += '<a class="s-hit" href="#/glossary?t=' + encodeURIComponent(g.term) + '"><b>' + esc(g.term) + '</b><p>' + esc(g.text) + '</p></a>';
+        });
+      }
+      if (eh.length) {
+        h += '<div class="s-sec">本文</div>';
+        eh.forEach(function (x) {
+          h += '<a class="s-hit" href="#/ep/' + x.e.no + '?q=' + encodeURIComponent(q) + '"><b>第' + x.e.no + '話 ' + esc(x.e.title) + '</b><small>' + x.c + '件</small>' +
+            x.sn.map(function (s) { return '<p>' + s + '</p>'; }).join('') + '</a>';
+        });
+      }
+      if (!eh.length && !gh.length) h = '<p class="empty">「' + esc(q) + '」は見つかりませんでした。</p>';
+      res.innerHTML = h;
+    }
+    input.addEventListener('input', function () { clearTimeout(t); t = setTimeout(run, 150); });
+    input.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') input.blur(); });
+    run();
+    if (!params.q) setTimeout(function () { try { input.focus(); } catch (e) { /* ignore */ } }, 50);
+  }
+
+  // ------------------------------------------------ print mode（?print=1）
+  function printAll() {
+    root.classList.add('print-mode');
+    top.innerHTML = '';
+    bottom.innerHTML = '';
+    var mins = EP.reduce(function (a, e) { return a + (e.minutes || 0); }, 0);
+    var h = '<section class="pr-cover"><p class="muted">' + esc(D.book.audience) + '</p><h1>' + esc(D.book.title) + '</h1><p class="muted">' + esc(D.book.subtitle) + '</p><p class="muted" style="font-size:.85em">全' + EP.length + '話・合計 約' + mins + '分</p></section>';
+    h += '<section class="pr-sec pr-toc"><h2>目次</h2>';
+    var cur = null;
+    EP.forEach(function (e) {
+      if (e.part !== cur) {
+        if (cur !== null) h += '</ol>';
+        cur = e.part;
+        h += '<h3>' + esc(partName(e.part)) + '</h3><ol>';
+      }
+      h += '<li><span class="n">第' + e.no + '話</span><span>' + esc(e.title) + '</span><span class="m">約' + e.minutes + '分</span></li>';
+    });
+    if (cur !== null) h += '</ol>';
+    h += '</section>';
+    EP.forEach(function (e) { h += episodeHtml(e, true); });
+    if (D.glossary.length) {
+      h += '<section class="pr-gloss"><h2>用語集</h2><dl>';
+      D.glossary.forEach(function (g) {
+        h += '<div class="g-item"><dt>' + esc(g.term) + (g.reading ? '<small>' + esc(g.reading) + '</small>' : '') + '</dt><dd>' + g.html + '</dd></div>';
+      });
+      h += '</dl></section>';
+    }
+    view.innerHTML = h;
+    Array.prototype.forEach.call(view.querySelectorAll('.quiz-item'), function (q) { q.classList.add('done'); });
+    window.__printReady = true;
+  }
+
+  // ------------------------------------------------ router
+  function route() {
+    closeSheet(true);
+    var r = parseHash();
+    var p = r.parts;
+    if (!p.length) cover();
+    else if (p[0] === 'toc') toc();
+    else if (p[0] === 'ep') episode(parseInt(p[1], 10), r.params);
+    else if (p[0] === 'glossary') glossary(r.params);
+    else if (p[0] === 'search') search(r.params);
+    else cover();
+  }
+
+  // ------------------------------------------------ term sheet
+  var sheet = document.getElementById('sheet');
+  var lastFocus = null;
+  function openSheet(term) {
+    var g = null;
+    for (var i = 0; i < D.glossary.length; i++) if (D.glossary[i].term === term) { g = D.glossary[i]; break; }
+    if (!g) return;
+    lastFocus = document.activeElement;
+    document.getElementById('sheet-title').innerHTML = esc(g.term) + (g.reading ? '<small>' + esc(g.reading) + '</small>' : '');
+    document.getElementById('sheet-body').innerHTML = g.html;
+    document.getElementById('sheet-more').setAttribute('href', '#/glossary?t=' + encodeURIComponent(g.term));
+    sheet.hidden = false;
+    var c = sheet.querySelector('.sheet [data-act="sheet-close"]');
+    if (c) c.focus({ preventScroll: true });
+  }
+  function closeSheet(silent) {
+    if (sheet.hidden) return;
+    sheet.hidden = true;
+    if (!silent && lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
+  }
+
+  // ------------------------------------------------ events
+  document.addEventListener('click', function (ev) {
+    var el = ev.target.closest('[data-act], .term, .choice, .quiz-retry');
+    if (!el) return;
+    if (el.classList.contains('term')) { openSheet(el.getAttribute('data-term')); return; }
+    if (el.classList.contains('choice')) {
+      var qi = el.closest('.quiz-item');
+      if (qi.classList.contains('done')) return;
+      el.classList.add('picked');
+      qi.classList.add('done');
+      var ok = el.hasAttribute('data-c');
+      var v = qi.querySelector('.verdict');
+      if (ok) { v.className = 'verdict ok'; v.textContent = '正解です。'; }
+      else {
+        var right = qi.querySelector('.choice[data-c] .mk');
+        v.className = 'verdict ng';
+        v.textContent = right ? '残念、正解は ' + right.textContent + ' です。' : 'この問題には正解が設定されていません。';
+      }
+      return;
+    }
+    if (el.classList.contains('quiz-retry')) {
+      var q2 = el.closest('.quiz-item');
+      q2.classList.remove('done');
+      Array.prototype.forEach.call(q2.querySelectorAll('.picked'), function (c) { c.classList.remove('picked'); });
+      return;
+    }
+    var act = el.getAttribute('data-act');
+    if (act === 'font') cycleFont();
+    else if (act === 'theme') cycleTheme();
+    else if (act === 'sheet-close') closeSheet();
+    else if (act === 'next') { if (curNo != null) setRead(curNo, true); }
+    else if (act === 'gjump') {
+      var tg = document.getElementById('g-' + el.getAttribute('data-g'));
+      if (tg) tg.scrollIntoView({ block: 'start' });
+    } else if (act === 'toggle-read' && curNo != null) {
+      var nv = !isRead(curNo);
+      setRead(curNo, nv);
+      el.textContent = nv ? '未読に戻す' : '読了にする';
+      var dl = document.querySelector('#ep-end .done-line');
+      if (dl) dl.innerHTML = nv ? I.checkOn + '<span>この話は読了済みです</span>' : I.check + '<span>未読に戻しました</span>';
+      toast(nv ? '読了にしました' : '未読に戻しました');
+    } else if (act === 'mark' && curNo != null) {
+      var m = marks().filter(function (x) { return x.no !== curNo; });
+      var on = !markOf(curNo);
+      if (on) m.unshift({ no: curNo, pos: Math.round(scrollRatio() * 1000) / 1000, t: Date.now() });
+      S.set('marks', m);
+      el.classList.toggle('on', on);
+      el.setAttribute('aria-pressed', on ? 'true' : 'false');
+      el.innerHTML = (on ? I.bookmarkOn : I.bookmark) + '<span>しおり</span>';
+      toast(on ? 'この位置にしおりを挟みました' : 'しおりを外しました');
+    }
+  });
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Escape') closeSheet();
+    if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.classList && ev.target.classList.contains('term')) {
+      ev.preventDefault();
+      openSheet(ev.target.getAttribute('data-term'));
+    }
+  });
+  // 用語集の「用語集で見る」で同じハッシュでも閉じる
+  document.getElementById('sheet-more').addEventListener('click', function () { closeSheet(true); });
+
+  // ------------------------------------------------ start
+  applySettings();
+  if (/[?&]print=1(&|$)/.test(location.search)) {
+    printAll();
+  } else {
+    window.addEventListener('hashchange', route);
+    route();
+  }
+})();
+
+</script>
+</body>
+</html>
