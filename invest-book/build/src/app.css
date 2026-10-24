@@ -187,7 +187,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2em 0; }
 
 .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 1.3em 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
 .table-wrap table { border-collapse: collapse; width: 100%; font-size: .9em; line-height: 1.6; }
-.table-wrap th, .table-wrap td { padding: .6em .75em; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); overflow-wrap: normal; word-break: keep-all; }
+.table-wrap th, .table-wrap td { padding: .6em .75em; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); overflow-wrap: break-word; word-break: normal; min-width: 4.5em; }
 .table-wrap th + th, .table-wrap td + td { border-left: 1px solid var(--line); }
 .table-wrap thead th { background: var(--surface2); font-weight: 600; font-size: .95em; }
 .table-wrap tbody tr:last-child td { border-bottom: 0; }

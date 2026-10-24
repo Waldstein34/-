@@ -483,6 +483,12 @@ function parseEpisode(file, src, glossary) {
         main = { kind: 'md', lines: [] };
         segs.push(main);
       }
+    } else if (blk && /\S\s*:::\s*$/.test(t)) {
+      warn(file, ln, '「:::」が行末にくっついています（:::は単独の行に書いてください）。ここでブロックを閉じたものとして扱います');
+      blk.lines.push({ t: t.replace(/\s*:::\s*$/, ''), ln });
+      blk = null;
+      main = { kind: 'md', lines: [] };
+      segs.push(main);
     } else if (/^\s*::/.test(t) && !/^\s*:::/.test(t)) {
       warn(file, ln, `ブロック記法はコロン3つ（:::）です: ${t.trim()}`);
       (blk || main).lines.push({ t, ln });
