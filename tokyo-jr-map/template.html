@@ -1,0 +1,351 @@
+<title>東京・埼玉 JR路線マップ</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap">
+<style>
+/* 画面いっぱいの地図。上に細い見出し、下に路線フィルター、駅を押すと下から駅の情報が出る */
+:root {
+  --bg: #eef1ef;
+  --panel: #ffffff;
+  --ink: #1b2420;
+  --muted: #66716c;
+  --hair: #d3d9d5;
+  --chip-off: #f3f5f4;
+  --font: "BIZ UDPGothic", "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141917; --panel: #1e2421; --ink: #e8ece9; --muted: #9aa5a0; --hair: #343c38; --chip-off: #191e1c;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141917; --panel: #1e2421; --ink: #e8ece9; --muted: #9aa5a0; --hair: #343c38; --chip-off: #191e1c;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  padding-block: 10px 8px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: var(--panel); border-bottom: 1px solid var(--hair);
+}
+h1 { font-size: 16px; margin: 0; font-weight: 700; letter-spacing: .02em; }
+.meta { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+#wrap { position: relative; flex: 1; min-height: 0; }
+canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; display: block; }
+.zoom {
+  position: absolute; right: max(12px, env(safe-area-inset-right, 0px)); top: 12px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.zoom button {
+  width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--hair);
+  background: var(--panel); color: var(--ink); font: 700 18px var(--font); cursor: pointer;
+}
+.zoom button.txt { font-size: 11px; }
+.credit {
+  position: absolute; left: max(10px, env(safe-area-inset-left, 0px)); bottom: 6px;
+  font-size: 10px; color: var(--muted); pointer-events: none;
+}
+#sheet {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  background: var(--panel); border-top: 1px solid var(--hair);
+  border-radius: 14px 14px 0 0; box-shadow: 0 -6px 20px rgba(0,0,0,.12);
+  padding-block: 14px 14px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  max-height: 55%; overflow-y: auto;
+}
+.sheet-head { display: flex; align-items: baseline; gap: 10px; }
+.sheet-head h2 { margin: 0; font-size: 22px; }
+.sheet-head .meta { flex: 1; }
+#close {
+  border: 1px solid var(--hair); background: var(--chip-off); color: var(--ink);
+  border-radius: 8px; padding: 6px 12px; font: 400 13px var(--font); cursor: pointer;
+}
+#sheet ul { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; }
+#sheet li { display: flex; align-items: center; gap: 10px; font-size: 15px; }
+#sheet li .bar { width: 6px; height: 22px; border-radius: 3px; flex: none; }
+#sheet li.off { color: var(--muted); }
+#sheet li.off .bar { opacity: .3; }
+#sheet li small { font-size: 12px; color: var(--muted); }
+footer {
+  background: var(--panel); border-top: 1px solid var(--hair);
+  padding-block: 8px 10px;
+}
+.tools {
+  display: flex; gap: 8px; align-items: center;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  margin-bottom: 8px; font-size: 12px; color: var(--muted);
+}
+.tools span { flex: 1; }
+.tools button {
+  border: 1px solid var(--hair); background: var(--chip-off); color: var(--ink);
+  border-radius: 8px; padding: 6px 10px; font: 400 12px var(--font); cursor: pointer;
+}
+#chips {
+  display: grid; grid-auto-flow: column; grid-template-rows: repeat(2, auto);
+  gap: 6px; overflow-x: auto; scrollbar-width: none;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+#chips::-webkit-scrollbar { display: none; }
+.chip {
+  display: flex; align-items: center; gap: 6px; white-space: nowrap;
+  border: 1px solid var(--hair); background: var(--panel); color: var(--ink);
+  border-radius: 999px; padding: 6px 11px 6px 8px; font: 400 13px var(--font); cursor: pointer;
+}
+.chip i { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+.chip[aria-pressed="false"] { background: var(--chip-off); color: var(--muted); }
+.chip[aria-pressed="false"] i { background: transparent !important; box-shadow: inset 0 0 0 2px var(--hair); }
+button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+</style>
+
+<header>
+  <h1>東京・埼玉 JR路線マップ</h1>
+  <span class="meta" id="count"></span>
+</header>
+<div id="wrap">
+  <canvas id="map" aria-label="JR路線の地図。駅を押すと通っている路線が表示されます"></canvas>
+  <div class="zoom">
+    <button id="zin" aria-label="拡大">＋</button>
+    <button id="zout" aria-label="縮小">－</button>
+    <button id="zfit" class="txt" aria-label="全体を表示">全体</button>
+  </div>
+  <div class="credit">駅位置: Mini Tokyo 3D（公共交通オープンデータ）</div>
+  <section id="sheet" hidden aria-live="polite">
+    <div class="sheet-head">
+      <h2 id="sname"></h2>
+      <span class="meta" id="smeta"></span>
+      <button id="close">閉じる</button>
+    </div>
+    <ul id="slist"></ul>
+  </section>
+</div>
+<footer>
+  <div class="tools">
+    <span>路線を押すと表示を切り替えます</span>
+    <button id="allon">すべて表示</button>
+    <button id="alloff">すべて消す</button>
+  </div>
+  <div id="chips"></div>
+</footer>
+
+<script>
+const DATA = __DATA__;
+const G = DATA.groups, ST = DATA.stations, LN = DATA.lines;
+const on = G.map(() => true);
+let selected = -1;
+
+// 区間ごとに、通る路線グループを集める（並べて描くため）
+const segs = new Map();
+LN.forEach(l => {
+  for (let i = 0; i < l.s.length - 1; i++) {
+    const a = l.s[i], b = l.s[i + 1];
+    if (a === b) continue;
+    const k = a < b ? a + '-' + b : b + '-' + a;
+    if (!segs.has(k)) segs.set(k, { a: Math.min(a, b), b: Math.max(a, b), g: [] });
+    const s = segs.get(k);
+    if (!s.g.includes(l.g)) s.g.push(l.g);
+  }
+});
+segs.forEach(s => s.g.sort((x, y) => x - y));
+
+// 画面
+const cv = document.getElementById('map'), ctx = cv.getContext('2d');
+let W = 0, H = 0, dpr = 1;
+const view = { s: 6, x: 0, y: 0 }; // s: 1kmあたりの画素数、x,y: 画面中心の位置(km)
+const lonToX = lon => (lon - 139.70) * 111.32 * Math.cos(35.75 * Math.PI / 180);
+const latToY = lat => -(lat - 35.75) * 110.95;
+function fit() {
+  // 東京都・埼玉県がおおむね収まる範囲
+  const x0 = lonToX(139.15), x1 = lonToX(139.95), y0 = latToY(36.2), y1 = latToY(35.55);
+  view.s = Math.min(W / (x1 - x0), H / (y1 - y0)) * 0.95;
+  view.x = (x0 + x1) / 2; view.y = (y0 + y1) / 2;
+}
+const sx = x => (x - view.x) * view.s + W / 2;
+const sy = y => (y - view.y) * view.s + H / 2;
+function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+function draw() {
+  const bg = css('--bg'), ink = css('--ink'), panel = css('--panel');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+  const w = Math.max(2, Math.min(7, view.s * 0.32));
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = w;
+
+  // 線：非表示の路線を薄く先に、表示中の路線を後に
+  for (const pass of [false, true]) {
+    G.forEach((grp, gi) => {
+      if (on[gi] !== pass) return;
+      ctx.beginPath();
+      segs.forEach(s => {
+        const k = s.g.indexOf(gi); if (k < 0) return;
+        const A = ST[s.a], B = ST[s.b];
+        const ax = sx(A.x), ay = sy(A.y), bx = sx(B.x), by = sy(B.y);
+        if (Math.max(ax, bx) < -20 || Math.min(ax, bx) > W + 20 || Math.max(ay, by) < -20 || Math.min(ay, by) > H + 20) return;
+        const len = Math.hypot(bx - ax, by - ay) || 1;
+        const off = (k - (s.g.length - 1) / 2) * w * 0.95;
+        const nx = -(by - ay) / len * off, ny = (bx - ax) / len * off;
+        ctx.moveTo(ax + nx, ay + ny); ctx.lineTo(bx + nx, by + ny);
+      });
+      ctx.strokeStyle = grp.c; ctx.globalAlpha = pass ? 1 : 0.14; ctx.stroke();
+    });
+  }
+  ctx.globalAlpha = 1;
+
+  // 駅
+  const pts = [];
+  ST.forEach((st, i) => {
+    const x = sx(st.x), y = sy(st.y);
+    if (x < -30 || x > W + 30 || y < -30 || y > H + 30) return;
+    const n = st.g.filter(g => on[g]).length;
+    const total = st.g.length;
+    const r = total >= 2 ? Math.min(w * (0.6 + total * 0.35), w * 3) : w * 0.75;
+    ctx.globalAlpha = n ? 1 : 0.2;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = panel; ctx.fill();
+    ctx.lineWidth = Math.max(1.2, w * 0.35); ctx.strokeStyle = ink; ctx.stroke();
+    if (i === selected) {
+      ctx.beginPath(); ctx.arc(x, y, r + 5, 0, Math.PI * 2);
+      ctx.lineWidth = 3; ctx.strokeStyle = ink; ctx.stroke();
+    }
+    if (n) pts.push({ i, x, y, r, n: total });
+  });
+  ctx.globalAlpha = 1;
+
+  // 駅名：乗り入れ路線が多い駅から順に、重ならないものだけ
+  const lim = view.s > 16 ? 1 : view.s > 9 ? 2 : view.s > 5 ? 3 : 5;
+  pts.sort((p, q) => q.n - p.n);
+  const boxes = [];
+  const fs = view.s > 16 ? 13 : 12;
+  ctx.font = `700 ${fs}px ${css('--font')}`;
+  ctx.textBaseline = 'middle';
+  for (const p of pts) {
+    if (p.n < lim && p.i !== selected) continue;
+    const t = ST[p.i].n, tw = ctx.measureText(t).width;
+    const bx = p.x + p.r + 4, by = p.y - fs / 2 - 1;
+    const box = [bx - 2, by, bx + tw + 2, by + fs + 2];
+    if (p.i !== selected && boxes.some(b => !(box[2] < b[0] || box[0] > b[2] || box[3] < b[1] || box[1] > b[3]))) continue;
+    boxes.push(box);
+    ctx.lineWidth = 3.5; ctx.strokeStyle = bg; ctx.strokeText(t, bx, p.y);
+    ctx.fillStyle = ink; ctx.fillText(t, bx, p.y);
+  }
+}
+let raf = 0;
+const redraw = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; draw(); }); };
+
+function resize() {
+  const r = cv.getBoundingClientRect();
+  const first = !W;
+  W = r.width; H = r.height; dpr = window.devicePixelRatio || 1;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  if (first) fit();
+  draw();
+}
+new ResizeObserver(resize).observe(cv);
+if (document.fonts) document.fonts.ready.then(redraw);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', redraw);
+new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+// 拡大・縮小
+function zoomAt(f, px, py) {
+  const ns = Math.max(1.5, Math.min(80, view.s * f));
+  const wx = (px - W / 2) / view.s + view.x, wy = (py - H / 2) / view.s + view.y;
+  view.s = ns;
+  view.x = wx - (px - W / 2) / ns; view.y = wy - (py - H / 2) / ns;
+  redraw();
+}
+document.getElementById('zin').onclick = () => zoomAt(1.6, W / 2, H / 2);
+document.getElementById('zout').onclick = () => zoomAt(1 / 1.6, W / 2, H / 2);
+document.getElementById('zfit').onclick = () => { fit(); redraw(); };
+cv.addEventListener('wheel', e => { e.preventDefault(); zoomAt(Math.exp(-e.deltaY * 0.002), e.offsetX, e.offsetY); }, { passive: false });
+
+// 指での操作（1本で移動、2本で拡大縮小、軽く押すと駅を選ぶ）
+const ptrs = new Map(); let moved = 0, pinch = null;
+cv.addEventListener('pointerdown', e => {
+  cv.setPointerCapture(e.pointerId);
+  ptrs.set(e.pointerId, { x: e.offsetX, y: e.offsetY });
+  if (ptrs.size === 1) moved = 0;
+  if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = Math.hypot(a.x - b.x, a.y - b.y); }
+});
+cv.addEventListener('pointermove', e => {
+  const p = ptrs.get(e.pointerId); if (!p) return;
+  const dx = e.offsetX - p.x, dy = e.offsetY - p.y;
+  p.x = e.offsetX; p.y = e.offsetY;
+  if (ptrs.size === 1) {
+    moved += Math.abs(dx) + Math.abs(dy);
+    view.x -= dx / view.s; view.y -= dy / view.s; redraw();
+  } else if (ptrs.size === 2) {
+    moved = 99;
+    const [a, b] = [...ptrs.values()];
+    const d = Math.hypot(a.x - b.x, a.y - b.y);
+    if (pinch) zoomAt(d / pinch, (a.x + b.x) / 2, (a.y + b.y) / 2);
+    pinch = d;
+  }
+});
+function up(e) {
+  if (!ptrs.has(e.pointerId)) return;
+  ptrs.delete(e.pointerId);
+  if (ptrs.size < 2) pinch = null;
+  if (ptrs.size === 0 && moved < 8) pick(e.offsetX, e.offsetY);
+}
+cv.addEventListener('pointerup', up);
+cv.addEventListener('pointercancel', e => { ptrs.delete(e.pointerId); pinch = null; });
+
+// 駅を選ぶ
+const sheet = document.getElementById('sheet');
+function pick(px, py) {
+  let best = -1, bd = 24;
+  ST.forEach((st, i) => {
+    if (!st.g.some(g => on[g])) return;
+    const d = Math.hypot(sx(st.x) - px, sy(st.y) - py);
+    if (d < bd) { bd = d; best = i; }
+  });
+  selected = best; showSheet(); redraw();
+}
+function showSheet() {
+  if (selected < 0) { sheet.hidden = true; return; }
+  const st = ST[selected];
+  document.getElementById('sname').textContent = st.n;
+  document.getElementById('smeta').textContent = st.g.length + '路線';
+  const ul = document.getElementById('slist'); ul.innerHTML = '';
+  st.g.forEach(g => {
+    const li = document.createElement('li');
+    if (!on[g]) li.className = 'off';
+    li.innerHTML = `<span class="bar" style="background:${G[g].c}"></span><span></span>${on[g] ? '' : '<small>（非表示中）</small>'}`;
+    li.children[1].textContent = G[g].n;
+    ul.appendChild(li);
+  });
+  sheet.hidden = false;
+}
+document.getElementById('close').onclick = () => { selected = -1; showSheet(); redraw(); };
+
+// 路線フィルター
+const chips = document.getElementById('chips');
+function updateCount() {
+  const k = on.filter(Boolean).length;
+  document.getElementById('count').textContent = `表示中 ${k} / ${G.length}路線・${ST.length}駅`;
+}
+G.forEach((g, i) => {
+  const b = document.createElement('button');
+  b.className = 'chip'; b.id = 'chip-' + i; b.setAttribute('aria-pressed', 'true');
+  b.innerHTML = `<i style="background:${g.c}"></i><span></span>`;
+  b.lastChild.textContent = g.n;
+  b.onclick = () => { on[i] = !on[i]; sync(); };
+  chips.appendChild(b);
+});
+function sync() {
+  G.forEach((g, i) => document.getElementById('chip-' + i).setAttribute('aria-pressed', on[i]));
+  updateCount(); showSheet(); redraw();
+}
+document.getElementById('allon').onclick = () => { on.fill(true); sync(); };
+document.getElementById('alloff').onclick = () => { on.fill(false); sync(); };
+updateCount();
+</script>
