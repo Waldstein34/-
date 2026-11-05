@@ -200,42 +200,58 @@ function draw() {
   }
   ctx.globalAlpha = 1;
 
-  // 駅
+  // 駅：乗り換え駅は少し大きめ（大きくしすぎない）。縮小しているときは乗り換え駅だけ描く
   const pts = [];
+  const showSmall = view.s > 7;
   ST.forEach((st, i) => {
     const x = sx(st.x), y = sy(st.y);
     if (x < -30 || x > W + 30 || y < -30 || y > H + 30) return;
     const n = st.g.filter(g => on[g]).length;
-    const total = st.g.length;
-    const r = total >= 2 ? Math.min(w * (0.6 + total * 0.35), w * 3) : w * 0.75;
+    const hub = st.g.length >= 2;
+    if (!hub && !showSmall && i !== selected) return;
+    const r = hub ? Math.min(Math.max(w * 1.1, 3.5), 8) : Math.min(Math.max(w * 0.6, 2.2), 4.5);
     ctx.globalAlpha = n ? 1 : 0.2;
     ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fillStyle = panel; ctx.fill();
-    ctx.lineWidth = Math.max(1.2, w * 0.35); ctx.strokeStyle = ink; ctx.stroke();
+    ctx.lineWidth = hub ? 2 : 1.5; ctx.strokeStyle = ink; ctx.stroke();
     if (i === selected) {
       ctx.beginPath(); ctx.arc(x, y, r + 5, 0, Math.PI * 2);
       ctx.lineWidth = 3; ctx.strokeStyle = ink; ctx.stroke();
     }
-    if (n) pts.push({ i, x, y, r, n: total });
+    if (n) pts.push({ i, x, y, r, n: st.g.length });
   });
   ctx.globalAlpha = 1;
 
-  // 駅名：乗り入れ路線が多い駅から順に、重ならないものだけ
-  const lim = view.s > 16 ? 1 : view.s > 9 ? 2 : view.s > 5 ? 3 : 5;
-  pts.sort((p, q) => q.n - p.n);
-  const boxes = [];
-  const fs = view.s > 16 ? 13 : 12;
+  // 駅名：選んだ駅 → 乗り入れ路線が多い駅の順に、駅の丸や他の駅名と重ならない位置（右・左・上・下）に置く
+  const lim = view.s > 18 ? 1 : view.s > 10 ? 2 : view.s > 5 ? 3 : 5;
+  pts.sort((p, q) => (q.i === selected) - (p.i === selected) || q.n - p.n);
+  const boxes = pts.map(p => [p.x - p.r, p.y - p.r, p.x + p.r, p.y + p.r]);
+  const fs = view.s > 18 ? 14 : 13;
   ctx.font = `700 ${fs}px ${css('--font')}`;
-  ctx.textBaseline = 'middle';
+  ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+  const nCircles = boxes.length;
+  const hit = (b, list) => list.some(o => !(b[2] < o[0] || b[0] > o[2] || b[3] < o[1] || b[1] > o[3]));
   for (const p of pts) {
     if (p.n < lim && p.i !== selected) continue;
-    const t = ST[p.i].n, tw = ctx.measureText(t).width;
-    const bx = p.x + p.r + 4, by = p.y - fs / 2 - 1;
-    const box = [bx - 2, by, bx + tw + 2, by + fs + 2];
-    if (p.i !== selected && boxes.some(b => !(box[2] < b[0] || box[0] > b[2] || box[3] < b[1] || box[1] > b[3]))) continue;
-    boxes.push(box);
-    ctx.lineWidth = 3.5; ctx.strokeStyle = bg; ctx.strokeText(t, bx, p.y);
-    ctx.fillStyle = ink; ctx.fillText(t, bx, p.y);
+    const t = ST[p.i].n, tw = ctx.measureText(t).width, g = p.r + 4;
+    const cands = [
+      [p.x + g, p.y], [p.x - g - tw, p.y],
+      [p.x - tw / 2, p.y - g - fs / 2], [p.x - tw / 2, p.y + g + fs / 2]
+    ];
+    // まず駅の丸にも駅名にも重ならない位置、なければ駅名同士だけ重ならない位置
+    let pos = null;
+    for (const avoid of [boxes, boxes.slice(nCircles)]) {
+      for (const [lx, ly] of cands) {
+        const b = [lx - 1, ly - fs / 2, lx + tw + 1, ly + fs / 2];
+        if (!hit(b, avoid)) { pos = [lx, ly, b]; break; }
+      }
+      if (pos || p.n < 3) break;
+    }
+    if (!pos && p.i === selected) pos = [cands[0][0], cands[0][1], [0, 0, 0, 0]];
+    if (!pos) continue;
+    boxes.push(pos[2]);
+    ctx.lineWidth = 4; ctx.strokeStyle = bg; ctx.strokeText(t, pos[0], pos[1]);
+    ctx.fillStyle = ink; ctx.fillText(t, pos[0], pos[1]);
   }
 }
 let raf = 0;
@@ -308,7 +324,13 @@ function pick(px, py) {
     const d = Math.hypot(sx(st.x) - px, sy(st.y) - py);
     if (d < bd) { bd = d; best = i; }
   });
-  selected = best; showSheet(); redraw();
+  selected = best; showSheet();
+  // 選んだ駅が下の駅情報に隠れないよう、見える範囲の中央へ寄せる
+  if (best >= 0) {
+    const vis = H - sheet.offsetHeight, y = sy(ST[best].y);
+    if (y > vis - 40) view.y += (y - vis / 2) / view.s;
+  }
+  redraw();
 }
 function showSheet() {
   if (selected < 0) { sheet.hidden = true; return; }
