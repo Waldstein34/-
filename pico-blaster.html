@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ピコブラスター</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap">
+<style>
+/* 横画面いっぱいに 16:9 のドット絵キャンバスを置き、設定ボタンだけを右下に浮かせる */
+:root{
+  --bg:#0b0820; --ink:#f4f1ff; --accent:#5ee0ff; --warn:#ffd23f; --panel:#1b1530;
+  --font:"DotGothic16", "Hiragino Kaku Gothic ProN", "Noto Sans JP", system-ui, sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--font)}
+body{box-sizing:border-box;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));-webkit-user-select:none;user-select:none}
+#wrap{height:100%;display:flex;align-items:center;justify-content:center}
+canvas{display:block;image-rendering:pixelated;touch-action:none;outline:none;max-width:100%}
+.btns{position:fixed;right:max(12px,env(safe-area-inset-right,0px));bottom:max(12px,env(safe-area-inset-bottom,0px));display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+button{font:inherit;font-size:14px;background:var(--panel);color:var(--ink);border:2px solid var(--accent);padding:6px 12px;border-radius:0;cursor:pointer}
+button.sub{border-color:var(--warn)}
+button:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
+</style>
+
+</head>
+<body>
+<div id="wrap"><canvas id="c" tabindex="0" aria-label="ゲーム画面"></canvas></div>
+<div class="btns">
+  <button id="cfgBtn" type="button">ボタン設定</button>
+  <button id="defBtn" type="button" class="sub" hidden>初期設定に戻す</button>
+  <button id="cancelBtn" type="button" class="sub" hidden>やめる</button>
+</div>
+
+<script>
+(() => {
+'use strict';
+const W = 320, H = 180, S = 3;
+const C = document.getElementById('c');
+const X = C.getContext('2d');
+C.width = W * S; C.height = H * S;
+
+function fit() {
+  const r = document.getElementById('wrap').getBoundingClientRect();
+  const s = Math.min(r.width / W, r.height / H);
+  C.style.width = Math.floor(W * s) + 'px';
+  C.style.height = Math.floor(H * s) + 'px';
+}
+addEventListener('resize', fit); fit();
+
+/* ---------- 保存（使えないときは何もしない） ---------- */
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+
+/* ---------- 音 ---------- */
+let AC = null;
+function ac() {
+  if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } }
+  if (AC.state === 'suspended') AC.resume();
+  return AC;
+}
+function beep(f, d, type = 'square', vol = 0.05, f2) {
+  const a = AC; if (!a || a.state !== 'running') return;
+  const o = a.createOscillator(), g = a.createGain(), n = a.currentTime;
+  o.type = type; o.frequency.setValueAtTime(f, n);
+  if (f2) o.frequency.exponentialRampToValueAtTime(f2, n + d);
+  g.gain.setValueAtTime(vol, n); g.gain.exponentialRampToValueAtTime(0.0001, n + d);
+  o.connect(g); g.connect(a.destination); o.start(n); o.stop(n + d);
+}
+function noise(d, vol = 0.12) {
+  const a = AC; if (!a || a.state !== 'running') return;
+  const len = Math.floor(a.sampleRate * d), buf = a.createBuffer(1, len, a.sampleRate), ch = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / len);
+  const s = a.createBufferSource(), g = a.createGain();
+  s.buffer = buf; g.gain.value = vol; s.connect(g); g.connect(a.destination); s.start();
+}
+
+/* ---------- ドット絵 ---------- */
+const PAL = { w:'#f4f1ff', c:'#5ee0ff', b:'#2a6cff', y:'#ffd23f', r:'#ff4d6d', o:'#ff9a3c', p:'#b45cff', g:'#6dff8b', k:'#1b1530', m:'#ff6ad5' };
+function sprite(rows) {
+  const h = rows.length, w = rows[0].length;
+  const make = (white) => {
+    const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+    const c = cv.getContext('2d');
+    rows.forEach((row, y) => [...row].forEach((ch, x) => {
+      if (ch === '.') return;
+      c.fillStyle = white ? '#ffffff' : PAL[ch]; c.fillRect(x, y, 1, 1);
+    }));
+    return cv;
+  };
+  return { img: make(false), white: make(true), w, h };
+}
+const SPR = {
+  player: sprite([
+    "..ww.........",
+    "..wcc........",
+    ".bbccccc.....",
+    "bbwwwcccccc..",
+    "oybbbbbwwwwcc",
+    "bbwwwcccccc..",
+    ".bbccccc.....",
+    "..wcc........",
+    "..ww........."]),
+  drone: sprite([
+    "....rrrr....",
+    "..rrmmmmrr..",
+    ".rmmwwmmmmr.",
+    "rmmwkwmmmmmr",
+    "rmmwwwmmmmmr",
+    ".rmmmmmmmmr.",
+    "..rr.rr.rr..",
+    ".r..r..r..r."]),
+  wave: sprite([
+    "....gg....",
+    "...gccg...",
+    "..gcwwcg..",
+    ".gcwkkwcg.",
+    "gcwkyykwcg",
+    ".gcwkkwcg.",
+    "..gcwwcg..",
+    "...gccg...",
+    "....gg...."]),
+  gunner: sprite([
+    "....oooooo....",
+    "..oorrrrrroo..",
+    ".orryyyyyyrro.",
+    "orryykkkkyyrro",
+    "wwwyykwwkyyrro",
+    "wwwyykwwkyyrro",
+    "orryykkkkyyrro",
+    ".orryyyyyyrro.",
+    "..oorrrrrroo..",
+    "....oooooo...."]),
+  boss: sprite([
+    "........pppppppp........",
+    "......ppmmmmmmmmpp......",
+    "....ppmmwwwwwwwwmmpp....",
+    "..ppmmwwkkkkkkkkwwmmpp..",
+    ".pmmwwkkrrrrrrrrkkwwmmp.",
+    "pmmwwkkrryyyyyyrrkkwwmmp",
+    "bbbbbkkrryywwyyrrkkwwmmp",
+    "bbbbbkkrryywwyyrrkkwwmmp",
+    "pmmwwkkrryyyyyyrrkkwwmmp",
+    ".pmmwwkkrrrrrrrrkkwwmmp.",
+    "..ppmmwwkkkkkkkkwwmmpp..",
+    "....ppmmwwwwwwwwmmpp....",
+    "......ppmmmmmmmmpp......",
+    "........pppppppp........"])
+};
+
+/* ---------- 入力（キーボードとゲームパッドの両方） ---------- */
+const ACTIONS = ['up', 'down', 'left', 'right', 'a', 'b', 'start'];
+const LABEL = { up:'上', down:'下', left:'左', right:'右', a:'ショット', b:'ボム', start:'ポーズ（START）' };
+const DEFAULT = {
+  up:    ['k:ArrowUp', 'k:KeyW', 'p:12', 'a:1-'],
+  down:  ['k:ArrowDown', 'k:KeyS', 'p:13', 'a:1+'],
+  left:  ['k:ArrowLeft', 'k:KeyA', 'p:14', 'a:0-'],
+  right: ['k:ArrowRight', 'k:KeyD', 'p:15', 'a:0+'],
+  a:     ['k:KeyZ', 'k:Space', 'k:KeyJ', 'p:0', 'p:1'],
+  b:     ['k:KeyX', 'k:KeyK', 'p:2', 'p:3', 'p:4', 'p:5'],
+  start: ['k:Enter', 'k:KeyP', 'k:Escape', 'p:9', 'p:8']
+};
+let binds = store.get('pico.binds', null) || JSON.parse(JSON.stringify(DEFAULT));
+const keys = new Set();
+let cur = {}, prev = {};
+ACTIONS.forEach(a => { cur[a] = false; prev[a] = false; });
+let padName = '', lastUnknown = null, unknownT = 0, anyInput = false;
+let cfgQueue = [];
+
+const keyId = e => e.code || e.key;
+const isBound = id => ACTIONS.some(a => binds[a].includes('k:' + id));
+
+addEventListener('keydown', e => {
+  ac(); anyInput = true;
+  const id = keyId(e);
+  if (state === 'config') { if (!e.repeat) cfgQueue.push('k:' + id); e.preventDefault(); return; }
+  keys.add(id);
+  if (isBound(id)) e.preventDefault();
+  else if (!e.repeat) { lastUnknown = id; unknownT = 240; }
+});
+addEventListener('keyup', e => keys.delete(keyId(e)));
+addEventListener('blur', () => keys.clear());
+addEventListener('pointerdown', () => { ac(); C.focus(); });
+
+function getPad() {
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  for (const p of pads) if (p && p.connected) return p;
+  return null;
+}
+function test(b, gp) {
+  const t = b[0], v = b.slice(2);
+  if (t === 'k') return keys.has(v);
+  if (!gp) return false;
+  if (t === 'p') { const btn = gp.buttons[+v]; return !!btn && (btn.pressed || btn.value > 0.5); }
+  if (t === 'a') {
+    const val = gp.axes[parseInt(v, 10)], sgn = v.endsWith('-') ? -1 : 1;
+    return val !== undefined && Math.abs(val) <= 1.05 && val * sgn > 0.5;
+  }
+  return false;
+}
+let padPrevBtn = [], padPrevAxis = [];
+function poll() {
+  const gp = getPad();
+  padName = gp ? gp.id : '';
+  for (const a of ACTIONS) cur[a] = binds[a].some(b => test(b, gp));
+  if (gp) {
+    // 設定中は「新しく押されたボタン／倒された方向」を拾う
+    gp.buttons.forEach((btn, i) => {
+      const on = btn.pressed || btn.value > 0.5;
+      if (on) anyInput = true;
+      if (state === 'config' && on && !padPrevBtn[i]) cfgQueue.push('p:' + i);
+      padPrevBtn[i] = on;
+    });
+    gp.axes.forEach((v, i) => {
+      const dir = Math.abs(v) <= 1.05 && Math.abs(v) > 0.6 ? (v < 0 ? '-' : '+') : '';
+      if (state === 'config' && dir && padPrevAxis[i] !== dir) cfgQueue.push('a:' + i + dir);
+      padPrevAxis[i] = dir;
+    });
+  }
+}
+const pr = a => cur[a] && !prev[a];
+
+/* ---------- ボタン設定 ---------- */
+const cfgBtn = document.getElementById('cfgBtn');
+const defBtn = document.getElementById('defBtn');
+const cancelBtn = document.getElementById('cancelBtn');
+let cfgIndex = 0, cfgNew = {}, cfgReturn = 'title', cfgMsgT = 0;
+function startConfig() {
+  cfgReturn = state === 'config' ? 'title' : state;
+  state = 'config'; cfgIndex = 0; cfgNew = {}; cfgQueue = []; keys.clear();
+  syncButtons();
+}
+function endConfig(save) {
+  if (save) { binds = cfgNew; store.set('pico.binds', binds); }
+  state = cfgReturn === 'play' ? 'pause' : cfgReturn;
+  cooldown = 30; keys.clear(); syncButtons();
+}
+function updateConfig() {
+  while (cfgQueue.length) {
+    const b = cfgQueue.shift();
+    const used = Object.values(cfgNew).some(list => list.includes(b));
+    if (used) { cfgMsgT = 90; continue; }
+    cfgNew[ACTIONS[cfgIndex]] = [b];
+    beep(660, 0.08, 'square', 0.05);
+    cfgIndex++;
+    if (cfgIndex >= ACTIONS.length) { endConfig(true); beep(990, 0.15, 'square', 0.05); return; }
+  }
+}
+cfgBtn.addEventListener('click', () => { cfgBtn.blur(); ac(); startConfig(); });
+cancelBtn.addEventListener('click', () => { cancelBtn.blur(); endConfig(false); });
+defBtn.addEventListener('click', () => {
+  defBtn.blur();
+  binds = JSON.parse(JSON.stringify(DEFAULT)); store.set('pico.binds', binds);
+  state = cfgReturn === 'play' ? 'pause' : cfgReturn; cooldown = 30; syncButtons();
+});
+let shownFor = '';
+function syncButtons() {
+  if (shownFor === state) return;
+  shownFor = state;
+  const inCfg = state === 'config';
+  cfgBtn.hidden = !(state === 'title' || state === 'pause' || state === 'over');
+  defBtn.hidden = !inCfg; cancelBtn.hidden = !inCfg;
+}
+
+/* ---------- ゲーム本体 ---------- */
+let state = 'title', cooldown = 0, gt = 0;
+let P, bullets, ebul, enemies, parts, items, score, lives, bombs, power, playT, spawnT, bossOn, nextBoss, flash, shake, level;
+let hi = store.get('pico.hi', 0);
+const stars = [];
+for (let i = 0; i < 70; i++) stars.push({ x: Math.random() * W, y: Math.random() * H, z: 1 + Math.floor(Math.random() * 3) });
+
+function reset() {
+  P = { x: 30, y: H / 2 - 4, inv: 120, fireT: 0 };
+  bullets = []; ebul = []; enemies = []; parts = []; items = [];
+  score = 0; lives = 3; bombs = 2; power = 1; playT = 0; spawnT = 60;
+  bossOn = false; nextBoss = 60 * 45; flash = 0; shake = 0; level = 1;
+}
+reset();
+
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const hit = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+const pbox = () => ({ x: P.x + 4, y: P.y + 3, w: 6, h: 3 });
+
+function fire() {
+  const cx = P.x + 12, cy = P.y + 4;
+  if (power === 1) bullets.push({ x: cx, y: cy - 1, vx: 5, vy: 0 });
+  else {
+    bullets.push({ x: cx - 2, y: cy - 3, vx: 5, vy: 0 });
+    bullets.push({ x: cx - 2, y: cy + 2, vx: 5, vy: 0 });
+  }
+  if (power >= 3) {
+    bullets.push({ x: cx - 4, y: cy - 2, vx: 4.6, vy: -1 });
+    bullets.push({ x: cx - 4, y: cy + 1, vx: 4.6, vy: 1 });
+  }
+  beep(880, 0.04, 'square', 0.015, 440);
+}
+function bomb() {
+  bombs--; flash = 20; shake = 10; ebul = [];
+  for (const e of enemies) damage(e, 10);
+  noise(0.6, 0.18); beep(120, 0.5, 'sawtooth', 0.06, 40);
+}
+function shoot(x, y, ang, sp) { ebul.push({ x: x - 2, y: y - 2, w: 4, h: 4, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp }); }
+function aim(x, y) { return Math.atan2(P.y + 4 - y, P.x + 6 - x); }
+function explode(x, y, n, cols, sp = 2) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, v = Math.random() * sp + 0.3;
+    parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 20 + Math.random() * 20, c: cols[i % cols.length] });
+  }
+}
+function spawnEnemy() {
+  const r = Math.random(), y = 16 + Math.random() * (H - 36);
+  if (r < 0.5) {
+    enemies.push({ type: 0, spr: SPR.drone, x: W + 4, y, hp: 1, vx: -(1.2 + Math.random() * 0.6 + level * 0.15), t: 0, pts: 100 });
+  } else if (r < 0.8) {
+    const by = 34 + Math.random() * (H - 76);
+    for (let i = 0; i < 4; i++) enemies.push({ type: 1, spr: SPR.wave, x: W + 4 + i * 16, y: by, by, hp: 1, vx: -1.3 - level * 0.1, t: -i * 10, pts: 150 });
+  } else {
+    enemies.push({ type: 2, spr: SPR.gunner, x: W + 4, y, hp: 3 + level, vx: -1, t: 0, pts: 300, shootT: 30, shots: 0 });
+  }
+}
+function spawnBoss() {
+  bossOn = true;
+  enemies.push({ type: 3, spr: SPR.boss, scale: 2, x: W + 10, y: H / 2 - 14, hp: 60 + level * 20, max: 60 + level * 20, vx: -0.8, t: 0, pts: 5000, shootT: 60, ringT: 160 });
+  beep(220, 0.3, 'square', 0.05, 110); setTimeout(() => beep(220, 0.3, 'square', 0.05, 110), 350);
+}
+function size(e) { const s = e.scale || 1; e.w = e.spr.w * s; e.h = e.spr.h * s; }
+function damage(e, n) {
+  if (e.dead) return;
+  e.hp -= n; e.hitT = 4;
+  if (e.hp > 0) { beep(300, 0.03, 'square', 0.02); return; }
+  e.dead = true; score += e.pts;
+  const cx = e.x + e.w / 2, cy = e.y + e.h / 2;
+  if (e.type === 3) {
+    explode(cx, cy, 80, ['#ffd23f', '#ff4d6d', '#ff6ad5', '#f4f1ff'], 3.5);
+    bossOn = false; nextBoss = playT + 60 * 45; shake = 20; flash = 12;
+    items.push({ x: cx, y: cy, kind: 'P', t: 0 });
+    noise(1, 0.2);
+  } else {
+    explode(cx, cy, 12, ['#ffd23f', '#ff9a3c', '#f4f1ff']);
+    noise(0.15, 0.08);
+    const roll = Math.random();
+    if (roll < 0.07) items.push({ x: cx, y: cy, kind: 'P', t: 0 });
+    else if (roll < 0.1) items.push({ x: cx, y: cy, kind: 'B', t: 0 });
+  }
+}
+function hurt() {
+  if (P.inv > 0) return;
+  lives--; power = Math.max(1, power - 1); P.inv = 120; shake = 14; ebul = [];
+  explode(P.x + 6, P.y + 4, 30, ['#5ee0ff', '#f4f1ff', '#2a6cff'], 2.5);
+  noise(0.5, 0.2); beep(400, 0.5, 'sawtooth', 0.06, 60);
+  if (lives <= 0) {
+    state = 'over'; cooldown = 60;
+    if (score > hi) { hi = score; store.set('pico.hi', hi); }
+    syncButtons();
+  }
+}
+
+function play(dt) {
+  playT += dt;
+  level = 1 + Math.floor(playT / (60 * 30));
+  let dx = (cur.right ? 1 : 0) - (cur.left ? 1 : 0), dy = (cur.down ? 1 : 0) - (cur.up ? 1 : 0);
+  if (dx && dy) { dx *= 0.7071; dy *= 0.7071; }
+  P.x = clamp(P.x + dx * 1.8 * dt, 2, W - 15);
+  P.y = clamp(P.y + dy * 1.8 * dt, 12, H - 10);
+  P.fireT -= dt;
+  if (cur.a && P.fireT <= 0) { fire(); P.fireT = 7; }
+  if (pr('b') && bombs > 0) bomb();
+  if (P.inv > 0) P.inv -= dt;
+
+  if (!bossOn) {
+    if (playT >= nextBoss) spawnBoss();
+    else if ((spawnT -= dt) <= 0) { spawnEnemy(); spawnT = Math.max(16, 70 - level * 8) * (0.6 + Math.random() * 0.8); }
+  }
+
+  for (const b of bullets) { b.x += b.vx * dt; b.y += b.vy * dt; }
+  for (const b of ebul) { b.x += b.vx * dt; b.y += b.vy * dt; }
+
+  for (const e of enemies) {
+    size(e); e.t += dt; if (e.hitT > 0) e.hitT -= dt;
+    if (e.type === 0) e.x += e.vx * dt;
+    else if (e.type === 1) { e.x += e.vx * dt; e.y = e.by + Math.sin(e.t * 0.06) * 18; }
+    else if (e.type === 2) {
+      if (e.x > 230 || e.shots >= 3) e.x += (e.shots >= 3 ? -1.4 : e.vx) * dt;
+      else if ((e.shootT -= dt) <= 0) {
+        shoot(e.x, e.y + e.h / 2, aim(e.x, e.y + e.h / 2), 1.6 + level * 0.1);
+        e.shots++; e.shootT = Math.max(35, 80 - level * 6);
+        beep(200, 0.06, 'square', 0.03);
+      }
+    } else if (e.type === 3) {
+      if (e.x > W - 64) e.x += e.vx * dt;
+      e.y = H / 2 - 14 + Math.sin(e.t * 0.02) * 50;
+      const cx = e.x + 4, cy = e.y + e.h / 2;
+      if ((e.shootT -= dt) <= 0) {
+        const a = aim(cx, cy);
+        for (let i = -1; i <= 1; i++) shoot(cx, cy, a + i * 0.25, 1.8);
+        e.shootT = Math.max(30, 55 - level * 4);
+      }
+      if ((e.ringT -= dt) <= 0) {
+        for (let i = 0; i < 14; i++) shoot(e.x + e.w / 2, cy, (i / 14) * Math.PI * 2 + e.t, 1.2);
+        e.ringT = 170; beep(150, 0.2, 'square', 0.04, 90);
+      }
+    }
+  }
+
+  for (const b of bullets) {
+    const bb = { x: b.x, y: b.y, w: 6, h: 2 };
+    for (const e of enemies) if (!e.dead && hit(bb, e)) { b.dead = true; damage(e, 1); break; }
+  }
+  const pb = pbox();
+  for (const b of ebul) if (hit(b, pb)) { b.dead = true; hurt(); }
+  for (const e of enemies) if (!e.dead && hit({ x: e.x + 2, y: e.y + 2, w: e.w - 4, h: e.h - 4 }, pb)) { hurt(); if (e.type !== 3) damage(e, 99); }
+
+  for (const it of items) {
+    it.t += dt; it.x -= 0.5 * dt;
+    if (hit({ x: it.x - 5, y: it.y - 5, w: 10, h: 10 }, { x: P.x, y: P.y, w: 13, h: 9 })) {
+      it.dead = true;
+      if (it.kind === 'P') { if (power < 3) power++; else score += 500; }
+      else { if (bombs < 5) bombs++; else score += 500; }
+      beep(523, 0.08, 'square', 0.05); setTimeout(() => beep(784, 0.12, 'square', 0.05), 80);
+    }
+  }
+
+  bullets = bullets.filter(b => !b.dead && b.x < W + 8 && b.y > -8 && b.y < H + 8);
+  ebul = ebul.filter(b => !b.dead && b.x > -8 && b.x < W + 8 && b.y > -8 && b.y < H + 8);
+  enemies = enemies.filter(e => !e.dead && e.x > -40);
+  items = items.filter(i => !i.dead && i.x > -10);
+}
+
+function update(dt) {
+  poll(); gt += dt;
+  for (const s of stars) { s.x -= s.z * 0.35 * dt * (state === 'play' ? 1 : 0.5); if (s.x < 0) { s.x += W; s.y = Math.random() * H; } }
+  for (const p of parts) { p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.96; p.vy *= 0.96; p.life -= dt; }
+  parts = parts.filter(p => p.life > 0);
+  if (flash > 0) flash -= dt;
+  if (shake > 0) shake -= dt;
+  if (unknownT > 0) unknownT -= dt;
+  if (cfgMsgT > 0) cfgMsgT -= dt;
+  if (cooldown > 0) cooldown -= dt;
+
+  if (state === 'title') {
+    if (cooldown <= 0 && (pr('a') || pr('start'))) { reset(); state = 'play'; beep(523, 0.1, 'square', 0.05); setTimeout(() => beep(1046, 0.15, 'square', 0.05), 100); }
+  } else if (state === 'config') updateConfig();
+  else if (state === 'play') { if (pr('start')) { state = 'pause'; beep(440, 0.08, 'square', 0.04); } else play(dt); }
+  else if (state === 'pause') { if (cooldown <= 0 && pr('start')) state = 'play'; }
+  else if (state === 'over') { if (cooldown <= 0 && (pr('a') || pr('start'))) { reset(); state = 'play'; } }
+  syncButtons();
+  for (const a of ACTIONS) prev[a] = cur[a];
+}
+
+/* ---------- 描画 ---------- */
+function txt(s, x, y, size, col, align = 'left') {
+  X.font = size + 'px ' + FONT;
+  X.textAlign = align; X.textBaseline = 'top';
+  X.fillStyle = '#1b1530'; X.fillText(s, x + 0.7, y + 0.7);
+  X.fillStyle = col; X.fillText(s, x, y);
+}
+const FONT = '"DotGothic16", "Noto Sans JP", sans-serif';
+function draw() {
+  X.setTransform(S, 0, 0, S, 0, 0);
+  X.imageSmoothingEnabled = false;
+  X.fillStyle = '#0b0820'; X.fillRect(0, 0, W, H);
+  for (const s of stars) { X.fillStyle = s.z === 3 ? '#f4f1ff' : s.z === 2 ? '#8a86b8' : '#433d6e'; X.fillRect(Math.round(s.x), Math.round(s.y), s.z === 3 ? 2 : 1, 1); }
+
+  if (shake > 0) X.translate((Math.random() - 0.5) * shake * 0.5, (Math.random() - 0.5) * shake * 0.5);
+
+  const inGame = state === 'play' || state === 'pause' || state === 'over' || (state === 'config' && cfgReturn !== 'title');
+  if (inGame) {
+    for (const it of items) {
+      const y = it.y + Math.sin(it.t * 0.1) * 2;
+      X.fillStyle = it.kind === 'P' ? '#ffd23f' : '#6dff8b';
+      X.fillRect(Math.round(it.x - 5), Math.round(y - 5), 10, 10);
+      X.fillStyle = '#1b1530'; X.fillRect(Math.round(it.x - 4), Math.round(y - 4), 8, 8);
+      txt(it.kind, it.x, y - 4, 8, it.kind === 'P' ? '#ffd23f' : '#6dff8b', 'center');
+    }
+    for (const e of enemies) {
+      const s = e.scale || 1;
+      X.drawImage(e.hitT > 0 ? e.spr.white : e.spr.img, Math.round(e.x), Math.round(e.y), e.spr.w * s, e.spr.h * s);
+    }
+    if (state !== 'over' && !(P.inv > 0 && Math.floor(P.inv / 4) % 2)) {
+      X.drawImage(SPR.player.img, Math.round(P.x), Math.round(P.y));
+      if (Math.floor(gt / 3) % 2) { X.fillStyle = '#ffd23f'; X.fillRect(Math.round(P.x) - 2, Math.round(P.y) + 4, 2, 1); }
+    }
+    X.fillStyle = '#5ee0ff';
+    for (const b of bullets) X.fillRect(Math.round(b.x), Math.round(b.y), 6, 2);
+    for (const b of ebul) {
+      X.fillStyle = Math.floor(gt / 4) % 2 ? '#ff4d6d' : '#ff6ad5';
+      X.fillRect(Math.round(b.x), Math.round(b.y), 4, 4);
+      X.fillStyle = '#f4f1ff'; X.fillRect(Math.round(b.x) + 1, Math.round(b.y) + 1, 2, 2);
+    }
+  }
+  for (const p of parts) { X.fillStyle = p.c; X.fillRect(Math.round(p.x), Math.round(p.y), p.life > 20 ? 2 : 1, p.life > 20 ? 2 : 1); }
+
+  X.setTransform(S, 0, 0, S, 0, 0);
+  if (inGame) drawHud();
+  if (state === 'title') drawTitle();
+  if (state === 'pause') drawPanel('ポーズ中', ['STARTで再開']);
+  if (state === 'over') drawPanel('ゲームオーバー', ['スコア ' + score, score >= hi && score > 0 ? 'ハイスコア更新' : 'ハイスコア ' + hi, cooldown <= 0 ? 'A か STARTでもう一度' : '']);
+  if (state === 'config') drawConfig();
+  if (flash > 0) { X.fillStyle = 'rgba(255,255,255,' + Math.min(1, flash / 20) * 0.7 + ')'; X.fillRect(0, 0, W, H); }
+}
+function drawHud() {
+  txt('SCORE ' + String(score).padStart(6, '0'), 4, 2, 8, '#f4f1ff');
+  txt('HI ' + String(Math.max(hi, score)).padStart(6, '0'), W - 4, 2, 8, '#ffd23f', 'right');
+  for (let i = 0; i < Math.max(0, lives); i++) X.drawImage(SPR.player.img, 4 + i * 15, H - 11);
+  txt('ボム ' + bombs + '　パワー ' + power + '　ステージ ' + level, W - 4, H - 11, 8, '#6dff8b', 'right');
+  const boss = enemies.find(e => e.type === 3);
+  if (boss) {
+    X.fillStyle = '#1b1530'; X.fillRect(W / 2 - 50, 13, 100, 4);
+    X.fillStyle = '#ff6ad5'; X.fillRect(W / 2 - 50, 13, 100 * Math.max(0, boss.hp) / boss.max, 4);
+  }
+}
+function drawPanel(title, lines) {
+  X.fillStyle = 'rgba(11,8,32,0.78)'; X.fillRect(0, 0, W, H);
+  txt(title, W / 2, 56, 20, '#5ee0ff', 'center');
+  lines.forEach((l, i) => txt(l, W / 2, 88 + i * 14, 10, i === lines.length - 1 && Math.floor(gt / 30) % 2 ? '#ffd23f' : '#f4f1ff', 'center'));
+}
+function drawTitle() {
+  const bob = Math.sin(gt * 0.05) * 2;
+  X.drawImage(SPR.player.img, W / 2 - 13, 22 + bob, 26, 18);
+  txt('ピコブラスター', W / 2, 44, 26, '#5ee0ff', 'center');
+  txt('8BitDo Micro で遊べる横シューティング', W / 2, 76, 9, '#b9b4e6', 'center');
+  if (Math.floor(gt / 30) % 2) txt('A か START でスタート', W / 2, 96, 11, '#ffd23f', 'center');
+  txt('十字キー：移動　A／B：ショット　X／Y／L／R：ボム　START：ポーズ', W / 2, 118, 7, '#f4f1ff', 'center');
+  txt('HI ' + hi, W / 2, 132, 8, '#ffd23f', 'center');
+  let status;
+  if (padName) status = 'コントローラー接続中：' + padName.slice(0, 34);
+  else if (anyInput) status = 'キーボード入力を受信中';
+  else status = 'コントローラーを接続するか、画面を一度タップしてからボタンを押してください';
+  txt(status, 6, H - 22, 7, padName || anyInput ? '#6dff8b' : '#b9b4e6');
+  if (unknownT > 0 && lastUnknown) txt('未登録のキー「' + lastUnknown + '」→ 右下の［ボタン設定］で登録できます', 6, H - 12, 7, '#ff9a3c');
+}
+function drawConfig() {
+  X.fillStyle = 'rgba(11,8,32,0.9)'; X.fillRect(0, 0, W, H);
+  txt('ボタン設定　' + Math.min(cfgIndex + 1, ACTIONS.length) + '／' + ACTIONS.length, W / 2, 16, 12, '#5ee0ff', 'center');
+  const a = ACTIONS[cfgIndex];
+  if (a) txt('「' + LABEL[a] + '」にしたいボタンを押してください', W / 2, 40, 11, '#ffd23f', 'center');
+  ACTIONS.forEach((k, i) => {
+    const y = 64 + i * 12, done = cfgNew[k];
+    txt(LABEL[k], 90, y, 8, i === cfgIndex ? '#ffd23f' : '#f4f1ff');
+    txt(done ? showBind(done[0]) : i === cfgIndex ? '…待機中' : '―', 190, y, 8, done ? '#6dff8b' : '#8a86b8');
+  });
+  if (cfgMsgT > 0) txt('そのボタンはもう使っています。別のボタンを押してください', W / 2, H - 22, 8, '#ff9a3c', 'center');
+}
+function showBind(b) {
+  const v = b.slice(2);
+  if (b[0] === 'k') return 'キー ' + v;
+  if (b[0] === 'p') return 'パッド ボタン' + v;
+  return 'パッド 軸' + v;
+}
+
+/* ---------- ループ ---------- */
+let last = performance.now();
+function frame(now) {
+  let dt = (now - last) / 16.667; last = now;
+  if (dt > 3) dt = 3; if (dt < 0) dt = 0;
+  update(dt); draw();
+  requestAnimationFrame(frame);
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'play') state = 'pause'; });
+C.addEventListener('pointerdown', () => {
+  if (state === 'title' && cooldown <= 0) { reset(); state = 'play'; }
+  else if (state === 'over' && cooldown <= 0) { reset(); state = 'play'; }
+});
+syncButtons();
+if (document.fonts && document.fonts.load) document.fonts.load('10px "DotGothic16"').catch(() => {});
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
