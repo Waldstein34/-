@@ -139,29 +139,26 @@ function bgmSync() {
   else if (mode === 'result' || mode === 'title' || mode === 'select') { if (bgm.src) bgmFadeOut(); }
 }
 
-/* ---------- 訪問者カウンター（外部の無料サービス counterapi.dev を使う） ---------- */
+/* ---------- 訪問者カウンター（外部の無料サービス Abacus を使う） ---------- */
 // GitHub Pages で開いたときだけ数える。同じブラウザは1回だけ数える。つながらないときは表示しない。
 let visitors = null, noCount = false;
 (function countVisit() {
-  const base = 'https://api.counterapi.dev/v1/futtobashi-island-w7k3p9/visits';
+  const base = 'https://abacus.jasoncameron.dev';
+  const id = '/futtobashi-island-w7k3p9/visits';
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   const set = k => { try { localStorage.setItem(k, '1'); } catch (e) {} };
   // アドレスの末尾に ?nocount を付けて一度開くと、そのブラウザは今後数えない
   if (/[?&]nocount\b/.test(location.search)) set('fi.nocount');
   noCount = !!get('fi.nocount');
-  const onPages = location.hostname.endsWith('github.io');
-  let path = '';
-  if (onPages && !noCount && !get('fi.seen')) path = '/up';
-  else if (onPages && noCount && get('fi.seen') && !get('fi.undone')) path = '/down';  // 以前に数えた分を1つ戻す
+  const hit = location.hostname.endsWith('github.io') && !noCount && !get('fi.v2seen');
   try {
-    fetch(base + path, { cache: 'no-store' })
-      .then(r => r.ok ? r.json() : null)
+    fetch(base + (hit ? '/hit' : '/get') + id, { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : (r.status === 404 ? { value: 0 } : null))
       .then(d => {
-        const n = d && (typeof d.count === 'number' ? d.count : d.value);
+        const n = d && (typeof d.value === 'number' ? d.value : d.count);
         if (typeof n !== 'number') return;
         visitors = n;
-        if (path === '/up') set('fi.seen');
-        if (path === '/down') set('fi.undone');
+        if (hit) set('fi.v2seen');
       })
       .catch(() => {});
   } catch (e) {}
