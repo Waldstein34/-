@@ -126,6 +126,27 @@ function bgmSync() {
   else if (mode === 'result' || mode === 'title' || mode === 'select') { if (bgm.src) bgmFadeOut(); }
 }
 
+/* ---------- 訪問者カウンター（外部の無料サービス counterapi.dev を使う） ---------- */
+// GitHub Pages で開いたときだけ数える。同じブラウザは1回だけ数える。つながらないときは表示しない。
+let visitors = null;
+(function countVisit() {
+  const base = 'https://api.counterapi.dev/v1/futtobashi-island-w7k3p9/visits';
+  let seen = false;
+  try { seen = !!localStorage.getItem('fi.seen'); } catch (e) {}
+  const up = location.hostname.endsWith('github.io') && !seen;
+  try {
+    fetch(base + (up ? '/up' : ''), { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        const n = d && (typeof d.count === 'number' ? d.count : d.value);
+        if (typeof n !== 'number') return;
+        visitors = n;
+        if (up) { try { localStorage.setItem('fi.seen', '1'); } catch (e) {} }
+      })
+      .catch(() => {});
+  } catch (e) {}
+})();
+
 /* ---------- ステージ ---------- */
 const WW = 480, WH = 270, CX = 240;
 const MAIN = { x1: 110, x2: 370, top: 190, bot: 222, main: true };
@@ -925,6 +946,7 @@ function drawTitle() {
   ];
   help.forEach((h, i) => txt(h, 66, 72 + i * 11, 7, '#e6e1ff'));
   if (best > 0) txt('最高到達：ステージ ' + best, W / 2, 150, 7, '#ffd23f', 'center');
+  if (visitors !== null) txt('訪問者 ' + visitors.toLocaleString('ja-JP') + '人', W - 6, 4, 7, '#f4f1ff', 'right');
   let status;
   if (padName) status = 'コントローラー接続中：' + padName.slice(0, 30);
   else if (anyInput) status = 'キーボード入力を受信中';
