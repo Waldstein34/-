@@ -141,20 +141,27 @@ function bgmSync() {
 
 /* ---------- 訪問者カウンター（外部の無料サービス counterapi.dev を使う） ---------- */
 // GitHub Pages で開いたときだけ数える。同じブラウザは1回だけ数える。つながらないときは表示しない。
-let visitors = null;
+let visitors = null, noCount = false;
 (function countVisit() {
   const base = 'https://api.counterapi.dev/v1/futtobashi-island-w7k3p9/visits';
-  let seen = false;
-  try { seen = !!localStorage.getItem('fi.seen'); } catch (e) {}
-  const up = location.hostname.endsWith('github.io') && !seen;
+  const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  const set = k => { try { localStorage.setItem(k, '1'); } catch (e) {} };
+  // アドレスの末尾に ?nocount を付けて一度開くと、そのブラウザは今後数えない
+  if (/[?&]nocount\b/.test(location.search)) set('fi.nocount');
+  noCount = !!get('fi.nocount');
+  const onPages = location.hostname.endsWith('github.io');
+  let path = '';
+  if (onPages && !noCount && !get('fi.seen')) path = '/up';
+  else if (onPages && noCount && get('fi.seen') && !get('fi.undone')) path = '/down';  // 以前に数えた分を1つ戻す
   try {
-    fetch(base + (up ? '/up' : ''), { cache: 'no-store' })
+    fetch(base + path, { cache: 'no-store' })
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         const n = d && (typeof d.count === 'number' ? d.count : d.value);
         if (typeof n !== 'number') return;
         visitors = n;
-        if (up) { try { localStorage.setItem('fi.seen', '1'); } catch (e) {} }
+        if (path === '/up') set('fi.seen');
+        if (path === '/down') set('fi.undone');
       })
       .catch(() => {});
   } catch (e) {}
@@ -959,7 +966,7 @@ function drawTitle() {
   ];
   help.forEach((h, i) => txt(h, 66, 72 + i * 11, 7, '#e6e1ff'));
   if (best > 0) txt('最高到達：ステージ ' + best, W / 2, 150, 7, '#ffd23f', 'center');
-  if (visitors !== null) txt('訪問者 ' + visitors.toLocaleString('ja-JP') + '人', W - 6, 4, 7, '#f4f1ff', 'right');
+  if (visitors !== null) txt('訪問者 ' + visitors.toLocaleString('ja-JP') + '人' + (noCount ? '（この端末は数えません）' : ''), W - 6, 4, 7, '#f4f1ff', 'right');
   let status;
   if (padName) status = 'コントローラー接続中：' + padName.slice(0, 30);
   else if (anyInput) status = 'キーボード入力を受信中';
