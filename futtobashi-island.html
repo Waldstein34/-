@@ -398,6 +398,7 @@ function startMatch() {
   bgmStop(false);
   const others = CHARS.map((c, i) => i).filter(i => i !== sel);
   F = [newFighter(CHARS[sel], 200, 1, 0), newFighter(CHARS[others[(stage - 1) % others.length]], 280, -1, 1)];
+  F.forEach(f => { f.kos = 0; f.dealt = 0; f.pop = 0; f.stockLost = 0; f.face = newFighter(f.ch, 0, 1, f.idx); });
   LEDGES.forEach(l => { l.occ = null; });
   updateCam(true);
   projs = []; parts = []; popups = []; dusts = []; rings = []; hitstop = 0; winner = -1;
@@ -733,7 +734,8 @@ function respawn(f) {
 }
 function koFighter(f) {
   releaseLedge(f);
-  f.stocks--; setState(f, 'dead'); f.move = null;
+  f.stocks--; setState(f, 'dead'); f.move = null; f.stockLost = 40;
+  const killer = F[1 - f.idx]; if (killer) killer.kos = (killer.kos || 0) + 1;
   const hw = W / 2 / cam.z, hh = H / 2 / cam.z;
   const ex = Math.max(cam.x - hw + 6, Math.min(cam.x + hw - 6, f.x)), ey = Math.max(cam.y - hh + 6, Math.min(cam.y + hh - 6, f.y - 20));
   sparks(ex, ey, 50, [f.ch.col.top, '#ffd23f', '#f4f1ff'], 4.5);
@@ -821,7 +823,8 @@ function sparks(x, y, n, cols, sp = 2) {
 function applyHit(att, def, m, dir, at, mult = 1) {
   releaseLedge(def);
   const dmg = Math.round(m.dmg * att.ch.dmg * mult);
-  def.percent = Math.min(999, def.percent + dmg);
+  def.percent = Math.min(999, def.percent + dmg); def.pop = 1;
+  if (att !== def) att.dealt = (att.dealt || 0) + dmg;
   const kb = (m.base + m.gr * def.percent / 100) * mult / def.ch.weight;
   const a = m.ang * Math.PI / 180;
   def.lvx = Math.cos(a) * kb * dir; def.lvy = -Math.sin(a) * kb;
@@ -923,8 +926,16 @@ function fightStep() {
   }
 }
 
+let fadeT = 0, lastMode = 'title';
 function step() {
   poll(); tick++;
+  if (mode !== lastMode) {
+    const big = ['title', 'select', 'intro', 'result'];
+    if (big.includes(mode) && big.includes(lastMode) || (lastMode === 'pause' && mode === 'title')) fadeT = 16;
+    lastMode = mode;
+  }
+  if (fadeT > 0) fadeT--;
+  for (const f of F) { if (f.pop > 0) f.pop *= 0.85; if (f.stockLost > 0) f.stockLost--; if (f.face) { f.face.t++; f.face.flash = f.state === 'hitstun' && f.t < 10 ? 2 : 0; } }
   bgmSync();
   for (const p of parts) { p.x += p.vx; p.y += p.vy; p.vx *= 0.93; p.vy *= 0.93; p.life--; }
   for (const d of dusts) { d.x += d.vx; d.y += d.vy; d.vx *= 0.9; d.vy *= 0.9; d.r += 0.12; d.life--; }
@@ -1170,13 +1181,27 @@ function pctColor(p) {
   return '#ff4d6d';
 }
 function drawCard(f, x) {
-  X.fillStyle = 'rgba(27,21,48,0.75)'; X.fillRect(x, 140, 62, 36);
+  const shake = f.pop > 0.3 ? (Math.random() - 0.5) * 3 * f.pop : 0;
+  x += shake;
+  X.fillStyle = 'rgba(27,21,48,0.78)'; X.fillRect(x, 140, 62, 36);
   X.fillStyle = f.idx === 0 ? '#ff4d6d' : '#8a86b8'; X.fillRect(x, 140, 62, 2);
-  txt(f.ch.name + (f.idx === 0 ? '' : '（CPU）'), x + 3, 143, 7, '#f4f1ff');
-  const p = Math.round(f.shownPct), shakeX = f.state === 'hitstun' && f.t < 8 ? (Math.random() - 0.5) * 2 : 0;
-  txt(p + '%', x + 58 + shakeX, 152, 14, pctColor(p), 'right');
-  for (let i = 0; i < f.stocks; i++) { X.fillStyle = f.ch.cape || f.ch.col.top; X.beginPath(); X.arc(x + 6 + i * 8, 170, 3, 0, Math.PI * 2); X.fill(); }
-  if (f.ch.beam) for (let i = 0; i < 3; i++) { X.fillStyle = i < f.ammo ? f.ch.emblem : '#433d6e'; X.fillRect(x + 36 + i * 8, 168, 6, 3); }
+  if (f.face) {
+    X.save(); X.beginPath(); X.rect(x + 1, 142, 22, 33); X.clip();
+    X.fillStyle = 'rgba(255,255,255,0.06)'; X.fillRect(x + 1, 142, 22, 33);
+    f.face.facing = 1; f.face.state = f.state === 'dead' ? 'hitstun' : 'idle';
+    drawFighter(f.face, 0.62, x + 11, 190);
+    X.restore();
+  }
+  txt(f.ch.name + (f.idx === 0 ? '' : '（CPU）'), x + 25, 143, 6, '#f4f1ff');
+  const p = Math.round(f.shownPct), size = 14 * (1 + 0.35 * (f.pop || 0));
+  txt(p + '%', x + 60, 160 - size / 2, size, f.pop > 0.5 ? '#ffffff' : pctColor(p), 'right');
+  for (let i = 0; i < f.stocks; i++) { X.fillStyle = f.ch.cape || f.ch.col.top; X.beginPath(); X.arc(x + 28 + i * 7, 171, 2.6, 0, Math.PI * 2); X.fill(); }
+  if (f.stockLost > 0) {
+    const k = 1 - f.stockLost / 40; X.globalAlpha = 1 - k;
+    X.strokeStyle = '#ffd23f'; X.lineWidth = 1; X.beginPath(); X.arc(x + 28 + f.stocks * 7, 171, 2.6 + k * 10, 0, Math.PI * 2); X.stroke();
+    X.globalAlpha = 1;
+  }
+  if (f.ch.beam) for (let i = 0; i < 3; i++) { X.fillStyle = i < f.ammo ? f.ch.emblem : '#433d6e'; X.fillRect(x + 46 + i * 5, 169, 4, 3); }
 }
 const demo = CHARS.map((c, i) => newFighter(c, 0, i === 1 ? -1 : 1, i ? 1 : 0));
 function drawTitle() {
@@ -1242,6 +1267,32 @@ function showBind(b) {
   const v = b.slice(2);
   return b[0] === 'k' ? 'キー ' + v : b[0] === 'p' ? 'パッド ボタン' + v : 'パッド 軸' + v;
 }
+function popTxt(s, x, y, size, col, age, from = 2.2) {
+  // age：出てからのフレーム数。大きく出てから、少し跳ねて落ち着く
+  const t = Math.min(1, age / 10), e = 1 + (from - 1) * Math.pow(1 - t, 3) - Math.sin(t * Math.PI) * 0.08;
+  X.save(); X.translate(x, y + size / 2); X.scale(e, e); X.globalAlpha = Math.min(1, age / 4 + 0.2);
+  txt(s, 0, -size / 2, size, col, 'center'); X.restore();
+}
+function drawResult() {
+  X.fillStyle = 'rgba(15,12,36,0.82)'; X.fillRect(0, 0, W, H);
+  const win = winner === 0, wf = F[winner >= 0 ? winner : 0], lf = F[1 - (winner >= 0 ? winner : 0)];
+  // 勝ったキャラに光の帯
+  X.save(); X.globalAlpha = 0.25; X.fillStyle = win ? '#ffd23f' : '#ff4d6d';
+  for (let i = 0; i < 6; i++) { const a = mt * 0.01 + i * Math.PI / 3; X.beginPath(); X.moveTo(70, 120); X.lineTo(70 + Math.cos(a) * 160, 120 + Math.sin(a) * 160); X.lineTo(70 + Math.cos(a + 0.25) * 160, 120 + Math.sin(a + 0.25) * 160); X.fill(); }
+  X.restore();
+  if (wf.face) { wf.face.state = 'win'; wf.face.facing = 1; drawFighter(wf.face, 1.7, 70, 168); }
+  popTxt(win ? 'あなたの勝ち' : 'あなたの負け', 205, 14, 20, win ? '#ffd23f' : '#ff4d6d', mt, 2.4);
+  txt(win ? 'ステージ ' + stage + ' クリア' : 'ステージ ' + stage, 205, 40, 9, '#f4f1ff', 'center');
+  const row = (f, y, label) => {
+    X.fillStyle = 'rgba(27,21,48,0.85)'; X.fillRect(132, y, 150, 30);
+    X.fillStyle = f.idx === 0 ? '#ff4d6d' : '#8a86b8'; X.fillRect(132, y, 2, 30);
+    txt(label + '　' + f.ch.name, 138, y + 3, 8, '#f4f1ff');
+    txt('撃墜 ' + (f.kos || 0) + '　与えたダメージ ' + (f.dealt || 0) + '%', 138, y + 16, 7, '#e6e1ff');
+  };
+  row(F[0], 58, 'あなた'); row(F[1], 94, 'CPU');
+  txt('B：タイトルへ', 205, 134, 8, '#f4f1ff', 'center');
+  if (mt > 50 && Math.floor(tick / 30) % 2) txt(win ? 'A：次の相手へ（少し強くなります）' : 'A：もう一度挑戦', 205, 148, 9, '#ffd23f', 'center');
+}
 function drawPanel(title, lines, titleCol = '#5ee0ff') {
   X.fillStyle = 'rgba(15,12,36,0.78)'; X.fillRect(0, 0, W, H);
   txt(title, W / 2, 46, 22, titleCol, 'center');
@@ -1283,14 +1334,17 @@ function draw() {
     X.globalAlpha = 1;
     X.setTransform(S, 0, 0, S, 0, 0);
     F.forEach(drawTag); F.forEach(drawOffscreen);
-    for (const p of popups) txt(p.s, p.x, p.y, 12, '#ffd23f', 'center');
+    for (const p of popups) { X.globalAlpha = Math.min(1, p.life / 15); popTxt(p.s, p.x, p.y, 12, '#ffd23f', 70 - p.life, 2.4); X.globalAlpha = 1; }
     drawCard(F[0], 4); drawCard(F[1], W - 66);
     txt('ステージ ' + stage, W / 2, 4, 7, '#f4f1ff', 'center');
-    if (mode === 'intro') txt(String(3 - Math.floor(mt / 40)), W / 2, 50, 30, '#f4f1ff', 'center');
-    if (mode === 'fight' && mt < 40) txt('ゴー', W / 2, 50, 30, '#ffd23f', 'center');
-    if (mode === 'gameEnd') txt('しあいしゅうりょう', W / 2, 54, 22, '#f4f1ff', 'center');
+    if (mode === 'intro') popTxt(String(3 - Math.floor(mt / 40)), W / 2, 50, 30, '#f4f1ff', mt % 40);
+    if (mode === 'fight' && mt < 40) { X.globalAlpha = Math.min(1, (40 - mt) / 12); popTxt('ゴー', W / 2, 50, 34, '#ffd23f', mt, 3); X.globalAlpha = 1; }
+    if (mode === 'gameEnd') { X.fillStyle = 'rgba(15,12,36,' + Math.min(0.45, mt / 60) + ')'; X.fillRect(0, 46, W, 36); popTxt('しあいしゅうりょう', W / 2, 54, 22, '#f4f1ff', mt, 2.6); }
     if (mode === 'pause') drawPanel('ポーズ中', ['B：タイトルへ戻る', 'STARTで再開']);
     if (mode === 'result') {
+      drawResult();
+    }
+    if (false) {
       if (winner === 0) drawPanel('あなたの勝ち', ['ステージ ' + stage + ' クリア', 'B：タイトルへ', mt > 50 ? 'A：次の相手へ（少し強くなります）' : ''], '#ffd23f');
       else drawPanel('あなたの負け', ['ステージ ' + stage, 'B：タイトルへ', mt > 50 ? 'A：もう一度挑戦' : ''], '#ff4d6d');
     }
@@ -1301,6 +1355,7 @@ function draw() {
   }
   if (mode === 'config') drawConfig();
   if (flashT > 0) { X.fillStyle = 'rgba(255,255,255,' + flashT / 20 + ')'; X.fillRect(0, 0, W, H); }
+  if (fadeT > 0) { X.setTransform(S, 0, 0, S, 0, 0); X.fillStyle = 'rgba(8,6,20,' + fadeT / 16 + ')'; X.fillRect(0, 0, W, H); }
 }
 
 /* ---------- ループ（1秒60回で固定） ---------- */
