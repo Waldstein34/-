@@ -1,0 +1,963 @@
+<title>ポコのぼうけん</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap">
+<style>
+/* layout: one full-screen pixel canvas, HUD and menus layered on top of it */
+:root {
+  --bg: #120d1c;
+  --panel: rgba(18, 13, 28, 0.86);
+  --ink: #fff7e6;
+  --accent: #ffb02e;
+  --muted: #c9b8e8;
+  --line: #4a3a66;
+  --pixel: "DotGothic16", "Hiragino Kaku Gothic ProN", "Noto Sans JP", monospace;
+  color-scheme: dark;
+}
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--ink); }
+body { font-family: var(--pixel); user-select: none; -webkit-user-select: none; }
+#wrap { position: fixed; inset: 0; display: grid; place-items: center; background: var(--bg); touch-action: none; }
+#stage { position: relative; --u: 3px; }
+#game { display: block; width: 100%; height: 100%; image-rendering: pixelated; image-rendering: crisp-edges; }
+#hud {
+  position: absolute; left: 0; right: 0; top: 0;
+  display: flex; justify-content: space-between; gap: calc(var(--u) * 4);
+  padding: calc(var(--u) * 3) calc(var(--u) * 6);
+  font-size: calc(var(--u) * 7); line-height: 1; color: var(--ink);
+  text-shadow: calc(var(--u) * 0.6) calc(var(--u) * 0.6) 0 #2b1d2e;
+  pointer-events: none; font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+#hud[hidden] { display: none !important; }
+#hud b { font-weight: normal; color: var(--accent); }
+.ov {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  background: var(--panel); text-align: center;
+}
+.ov[hidden] { display: none !important; }
+.box { display: grid; gap: calc(var(--u) * 5); justify-items: center; padding: calc(var(--u) * 6); max-width: 92%; }
+.big { font-size: calc(var(--u) * 20); color: var(--accent); letter-spacing: 0.06em;
+  text-shadow: calc(var(--u) * 1.2) calc(var(--u) * 1.2) 0 #6b2c12; line-height: 1.1; }
+.mid { font-size: calc(var(--u) * 11); color: var(--ink); }
+.small { font-size: calc(var(--u) * 5.5); color: var(--muted); line-height: 1.5; }
+.menu { display: grid; gap: calc(var(--u) * 2); justify-items: start; }
+.menu button {
+  font: inherit; font-size: calc(var(--u) * 8.5); color: var(--ink);
+  background: none; border: 0; padding: calc(var(--u) * 1) calc(var(--u) * 3);
+  cursor: pointer; text-align: left;
+}
+.menu button::before { content: "▶"; display: inline-block; width: 1.4em; color: transparent; }
+.menu button.sel { color: var(--accent); }
+.menu button.sel::before { color: var(--accent); }
+.menu button:focus-visible { outline: calc(var(--u) * 0.6) solid var(--accent); }
+#transparentMsg { background: transparent; }
+#cfgList { display: grid; grid-template-columns: auto auto; gap: calc(var(--u) * 1) calc(var(--u) * 6);
+  font-size: calc(var(--u) * 5.5); text-align: left; }
+#cfgList span:nth-child(odd) { color: var(--muted); }
+#cfgPrompt { font-size: calc(var(--u) * 8); color: var(--accent); min-height: 1.2em; }
+#rotate { position: fixed; inset: 0; display: grid; place-items: center; background: var(--bg);
+  font-size: 22px; color: var(--ink); text-align: center; padding: 24px; z-index: 5; }
+#rotate[hidden] { display: none !important; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div id="wrap">
+  <div id="stage">
+    <canvas id="game" width="280" height="160"></canvas>
+    <div id="hud" hidden>
+      <span>ポコ×<b id="hLives">3</b></span>
+      <span>スコア <b id="hScore">000000</b></span>
+      <span>コイン×<b id="hCoins">00</b></span>
+      <span>ステージ <b id="hStage">1</b></span>
+      <span>タイム <b id="hTime">300</b></span>
+    </div>
+
+    <div id="ovTitle" class="ov">
+      <div class="box">
+        <div class="big">ポコのぼうけん</div>
+        <div class="menu">
+          <button id="mStart" data-act="start">はじめる</button>
+          <button id="mConfig" data-act="config">ボタン設定</button>
+          <button id="mFull" data-act="full">全画面にする</button>
+        </div>
+        <div class="small">十字キーで選んで、A かスタートで決定<br><span class="padStatus"></span></div>
+      </div>
+    </div>
+
+    <div id="ovConfig" class="ov" hidden>
+      <div class="box">
+        <div class="mid">ボタン設定</div>
+        <div id="cfgList"></div>
+        <div id="cfgPrompt"></div>
+        <div class="menu">
+          <button id="cAll" data-act="capture">まとめて設定する</button>
+          <button id="cReset" data-act="reset">初期設定に戻す</button>
+          <button id="cBack" data-act="back">もどる</button>
+        </div>
+        <div class="small">いま押されている入力：<span id="cfgLive">なし</span><br><span class="padStatus"></span></div>
+      </div>
+    </div>
+
+    <div id="ovPause" class="ov" hidden>
+      <div class="box">
+        <div class="mid">ポーズ</div>
+        <div class="menu">
+          <button id="pResume" data-act="resume">つづける</button>
+          <button id="pTitle" data-act="title">タイトルへ</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="ovOver" class="ov" hidden>
+      <div class="box">
+        <div class="big" id="overHead">ゲームオーバー</div>
+        <div class="mid" id="overScore"></div>
+        <div class="menu">
+          <button id="oRetry" data-act="retry">もういちど</button>
+          <button id="oTitle" data-act="title">タイトルへ</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="ovMsg" class="ov" hidden>
+      <div class="box">
+        <div class="mid" id="msgHead"></div>
+        <div class="small" id="msgSub"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="rotate" hidden>スマホを横向きにしてください</div>
+
+<script>
+(() => {
+'use strict';
+const T = 16, VH = 160, ROWS = 10;
+const cv = document.getElementById('game');
+const ctx = cv.getContext('2d');
+const stageEl = document.getElementById('stage');
+const $ = id => document.getElementById(id);
+let VW = 280;
+
+/* ---------- 画面サイズ ---------- */
+function resize() {
+  const w = window.innerWidth, h = window.innerHeight;
+  const portrait = h > w * 1.05;
+  $('rotate').hidden = !portrait;
+  const a = portrait ? 16 / 9 : w / h;
+  VW = Math.max(224, Math.min(400, Math.round(VH * a)));
+  cv.width = VW; cv.height = VH;
+  ctx.imageSmoothingEnabled = false;
+  const s = Math.min(w / VW, h / VH);
+  stageEl.style.width = Math.floor(VW * s) + 'px';
+  stageEl.style.height = Math.floor(VH * s) + 'px';
+  stageEl.style.setProperty('--u', (VH * s / 160) + 'px');
+}
+window.addEventListener('resize', resize);
+
+/* ---------- ドット絵 ---------- */
+function canvas16(w = 16, h = 16) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+function sprite(rows, pal) {
+  const r = rows.map(s => (s + '................').slice(0, 16));
+  while (r.length < 16) r.unshift('................');
+  const c = canvas16(), g = c.getContext('2d');
+  r.forEach((line, y) => { for (let x = 0; x < 16; x++) { const col = pal[line[x]]; if (col) { g.fillStyle = col; g.fillRect(x, y, 1, 1); } } });
+  return c;
+}
+function flipped(c) { const f = canvas16(c.width, c.height), g = f.getContext('2d'); g.scale(-1, 1); g.drawImage(c, -c.width, 0); return f; }
+function both(c) { return [c, flipped(c)]; }
+
+const PBODY = [
+  '........gg......',
+  '.......gg.......',
+  '.....kkkkkk.....',
+  '...kkooooookk...',
+  '..kooooooooook..',
+  '.koooooooeooeok.',
+  '.koooooooeooeok.',
+  '.koooooroooorok.',
+  '.kooooooooooook.',
+  '.kooyyyyyyyyook.',
+  '..kooyyyyyyook..',
+  '...kkooooookk...',
+  '....kkkkkkkk....',
+];
+const PFEET = {
+  stand: ['....kok..kok....', '...kook..kook...', '...kkkk..kkkk...'],
+  walk1: ['...kok....kok...', '..kook....kook..', '..kkkk....kkkk..'],
+  walk2: ['.....kokok......', '.....kookk......', '.....kkkk.......'],
+  jump:  ['..kook...kook...', '..kkk.....kkk...', '................'],
+};
+const PAL_N = { k: '#2b1d2e', o: '#f08a3c', y: '#ffd9a0', e: '#2b1d2e', g: '#5fbf4a', r: '#ff7f8f' };
+const PAL_P = { k: '#2b1d2e', o: '#ffc93c', y: '#fff4c2', e: '#2b1d2e', g: '#ff5fa2', r: '#ff7f8f' };
+function playerSet(pal) {
+  const o = {};
+  for (const k in PFEET) o[k] = both(sprite(PBODY.concat(PFEET[k]), pal));
+  return o;
+}
+const SPR_P = { n: playerSet(PAL_N), p: playerSet(PAL_P) };
+
+const BUG = [
+  '......kkkk......',
+  '....kkppppkk....',
+  '...kppppppppk...',
+  '..kppqppppqppk..',
+  '..kppwkppwkppk..',
+  '..kppppppppppk..',
+  '.kppppppppppppk.',
+  '.kkppppppppppkk.',
+  '..kkkkkkkkkkkk..',
+];
+const PAL_BUG = { k: '#2b1d2e', p: '#7a4bd1', q: '#b48cff', w: '#ffffff' };
+const SPR_BUG = [
+  sprite(BUG.concat(['...kk......kk...', '..kkk......kkk..']), PAL_BUG),
+  sprite(BUG.concat(['....kk....kk....', '...kkk....kkk...']), PAL_BUG),
+];
+const BAT = [
+  '................',
+  '.....kkkkkk.....',
+  '....kbbbbbbk....',
+  '...kbbwbbwbbk...',
+  '...kbbkbbkbbk...',
+  '...kbbbbbbbbk...',
+  '....kbbccbbk....',
+  '.....kkkkkk.....',
+];
+const PAL_BAT = { k: '#2b1d2e', b: '#3fa7a0', w: '#ffffff', c: '#ffd23f', x: '#8ce0d6' };
+const SPR_BAT = [
+  sprite(['xx............xx', 'kxx..........xxk', '.kxx........xxk.'].concat(BAT), PAL_BAT),
+  sprite(['................', '................', '................'].concat(BAT.slice(0, 4), ['kxbbbbbbbbbbbbxk', 'kxxkbbbbbbbbkxxk'], BAT.slice(6)), PAL_BAT),
+];
+const SPR_BERRY = sprite([
+  '.......gg.......',
+  '......gggg......',
+  '....kkkgkkk.....',
+  '...krrrrrrrk....',
+  '..krrwrrrrrrk...',
+  '..krwwrrrrrrk...',
+  '..krrrrrrrrrk...',
+  '..krrrrrrrrrk...',
+  '...krrrrrrrk....',
+  '....kkkkkkk.....',
+], { k: '#2b1d2e', r: '#ff3d6e', w: '#ffd1dc', g: '#5fbf4a' });
+
+function tile(fn) { const c = canvas16(), g = c.getContext('2d'); fn(g); return c; }
+function px(g, c, x, y, w = 1, h = 1) { g.fillStyle = c; g.fillRect(x, y, w, h); }
+const TL = {};
+TL.dirt = tile(g => {
+  px(g, '#b46a35', 0, 0, 16, 16);
+  [[2, 3], [9, 1], [12, 7], [5, 10], [11, 13], [1, 14], [7, 6], [14, 11]].forEach(([x, y]) => px(g, '#8a4b22', x, y, 2, 1));
+  [[4, 5], [10, 10], [2, 12]].forEach(([x, y]) => px(g, '#cf8a50', x, y, 1, 1));
+});
+TL.grass = tile(g => {
+  g.drawImage(TL.dirt, 0, 0);
+  px(g, '#4fb43f', 0, 0, 16, 5); px(g, '#8fe36b', 0, 0, 16, 1);
+  px(g, '#3a8a30', 0, 5, 16, 1);
+  for (let x = 0; x < 16; x += 4) px(g, '#3a8a30', x + 1, 6, 2, 1);
+});
+TL.brick = tile(g => {
+  px(g, '#c65a3a', 0, 0, 16, 16);
+  px(g, '#7a2c1c', 0, 7, 16, 1); px(g, '#7a2c1c', 0, 15, 16, 1);
+  px(g, '#7a2c1c', 7, 0, 1, 7); px(g, '#7a2c1c', 15, 0, 1, 7);
+  px(g, '#7a2c1c', 3, 8, 1, 7); px(g, '#7a2c1c', 11, 8, 1, 7);
+  px(g, '#e88a63', 0, 0, 7, 1); px(g, '#e88a63', 8, 0, 7, 1);
+  px(g, '#e88a63', 4, 8, 7, 1); px(g, '#e88a63', 12, 8, 4, 1); px(g, '#e88a63', 0, 8, 3, 1);
+});
+const STAR = ['...x...', '..xxx..', 'xxxxxxx', '.xxxxx.', '..xxx..', '.xx.xx.', 'x.....x'];
+function qblock(starCol) {
+  return tile(g => {
+    px(g, '#8a4f0f', 0, 0, 16, 16); px(g, '#f5b335', 1, 1, 14, 14);
+    px(g, '#ffd877', 1, 1, 14, 1); px(g, '#c98516', 1, 14, 14, 1);
+    [[2, 2], [13, 2], [2, 13], [13, 13]].forEach(([x, y]) => px(g, '#8a4f0f', x, y));
+    STAR.forEach((r, y) => { for (let x = 0; x < 7; x++) if (r[x] === 'x') px(g, starCol, 4 + x, 4 + y); });
+  });
+}
+TL.q = [qblock('#fff1b8'), qblock('#ffe08a'), qblock('#ffcf5a'), qblock('#ffe08a')];
+TL.used = tile(g => { px(g, '#5a3c22', 0, 0, 16, 16); px(g, '#9a7652', 1, 1, 14, 14); [[2, 2], [13, 2], [2, 13], [13, 13]].forEach(([x, y]) => px(g, '#5a3c22', x, y)); });
+TL.stone = tile(g => { px(g, '#5b5f78', 0, 0, 16, 16); px(g, '#8d91a8', 0, 0, 15, 15); px(g, '#c5c9dc', 0, 0, 15, 1); px(g, '#c5c9dc', 0, 0, 1, 15); px(g, '#a5a9bf', 5, 5, 3, 2); });
+TL.spike = tile(g => {
+  for (const sx of [0, 8]) for (let y = 8; y < 16; y++) {
+    const half = Math.floor((y - 8) / 2);
+    px(g, '#4a4e63', sx + 3 - half, y, half * 2 + 2, 1);
+    if (half > 0) px(g, '#d9dce8', sx + 4 - half, y, half * 2, 1);
+  }
+});
+
+/* ---------- 入力 ---------- */
+const ACTIONS = ['left', 'right', 'up', 'down', 'jump', 'dash', 'start'];
+const ACTION_NAMES = { left: '左', right: '右', up: '上', down: '下', jump: 'ジャンプ', dash: 'ダッシュ', start: 'ポーズ' };
+const DEFAULT_BIND = {
+  left: ['k:ArrowLeft', 'k:KeyA', 'a:0-', 'b:14', 'a:6-'],
+  right: ['k:ArrowRight', 'k:KeyD', 'a:0+', 'b:15', 'a:6+'],
+  up: ['k:ArrowUp', 'k:KeyW', 'a:1-', 'b:12', 'a:7-'],
+  down: ['k:ArrowDown', 'k:KeyS', 'a:1+', 'b:13', 'a:7+'],
+  jump: ['k:Space', 'k:KeyZ', 'k:KeyK', 'b:0', 'b:1'],
+  dash: ['k:KeyX', 'k:KeyJ', 'k:ShiftLeft', 'b:2', 'b:3'],
+  start: ['k:Enter', 'k:KeyP', 'k:Escape', 'b:9'],
+};
+const clone = o => JSON.parse(JSON.stringify(o));
+let BIND = null;
+try { BIND = JSON.parse(localStorage.getItem('poco-bind') || 'null'); } catch (e) { BIND = null; }
+if (!BIND || typeof BIND !== 'object') BIND = clone(DEFAULT_BIND);
+for (const a of ACTIONS) if (!Array.isArray(BIND[a])) BIND[a] = DEFAULT_BIND[a].slice();
+function saveBind() { try { localStorage.setItem('poco-bind', JSON.stringify(BIND)); } catch (e) {} }
+
+const keys = new Set();
+const BLOCK_KEYS = ['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', 'Tab'];
+window.addEventListener('keydown', e => {
+  keys.add('k:' + (e.code || e.key));
+  if (BLOCK_KEYS.includes(e.code)) e.preventDefault();
+  unlockAudio();
+}, { passive: false });
+window.addEventListener('keyup', e => keys.delete('k:' + (e.code || e.key)));
+window.addEventListener('blur', () => keys.clear());
+window.addEventListener('pointerdown', () => { unlockAudio(); try { window.focus(); } catch (e) {} });
+
+let padState = 'none', padName = '';
+function getPad() {
+  let ps;
+  try { ps = navigator.getGamepads ? navigator.getGamepads() : []; }
+  catch (e) { padState = 'blocked'; return null; }
+  for (const p of ps || []) if (p && p.connected) { padState = 'ok'; padName = p.id; return p; }
+  if (padState !== 'blocked') padState = 'none';
+  return null;
+}
+function rawActive(pad, base) {
+  const s = new Set(keys);
+  if (pad) {
+    pad.buttons.forEach((b, i) => { if (b.pressed || b.value > 0.5) s.add('b:' + i); });
+    pad.axes.forEach((v, i) => {
+      const b0 = base ? (base[i] || 0) : 0;
+      if (Math.abs(v) > 0.55 && Math.abs(v - b0) > 0.55) s.add('a:' + i + (v < 0 ? '-' : '+'));
+    });
+  }
+  return s;
+}
+const held = {}, pressed = {};
+let rawNow = new Set(), curPad = null;
+function pollInput() {
+  curPad = getPad();
+  rawNow = rawActive(curPad, null);
+  for (const a of ACTIONS) {
+    const was = held[a];
+    held[a] = BIND[a].some(id => rawNow.has(id));
+    pressed[a] = held[a] && !was;
+  }
+}
+function fmtId(id) {
+  const [t, v] = [id.slice(0, 1), id.slice(2)];
+  if (t === 'k') {
+    const arrows = { ArrowLeft: '←', ArrowRight: '→', ArrowUp: '↑', ArrowDown: '↓' };
+    return 'キー ' + (arrows[v] || v.replace(/^Key|^Digit/, ''));
+  }
+  if (t === 'b') return 'ボタン' + v;
+  if (t === 'a') return '軸' + v.slice(0, -1) + (v.endsWith('-') ? '−' : '＋');
+  return id;
+}
+function padStatusText() {
+  if (padState === 'ok') return 'コントローラー接続中：' + padName.slice(0, 28);
+  if (padState === 'blocked') return 'この画面ではコントローラーを直接読めません。8BitDo をキーボードモードにしてください';
+  return 'コントローラー未認識（つないだら一度ボタンを押してください）';
+}
+
+/* ---------- 効果音 ---------- */
+let AC = null;
+function unlockAudio() {
+  try {
+    if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === 'suspended') AC.resume();
+  } catch (e) {}
+}
+function tone(f0, f1, dur, type = 'square', vol = 0.07, delay = 0) {
+  if (!AC || AC.state !== 'running') return;
+  const t = AC.currentTime + delay;
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type = type; o.frequency.setValueAtTime(f0, t);
+  if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.connect(g).connect(AC.destination); o.start(t); o.stop(t + dur + 0.02);
+}
+const SFX = {
+  jump: () => tone(280, 660, 0.14),
+  coin: () => { tone(988, 0, 0.07); tone(1319, 0, 0.22, 'square', 0.07, 0.07); },
+  stomp: () => tone(420, 110, 0.12),
+  power: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, 0, 0.1, 'square', 0.06, i * 0.07)),
+  sprout: () => tone(300, 900, 0.3, 'triangle', 0.1),
+  bump: () => tone(150, 90, 0.08, 'triangle', 0.15),
+  brk: () => tone(220, 60, 0.2, 'sawtooth', 0.06),
+  hurt: () => tone(620, 180, 0.3),
+  die: () => [494, 440, 392, 330, 262].forEach((f, i) => tone(f, 0, 0.14, 'square', 0.07, i * 0.13)),
+  goal: () => [523, 659, 784, 1047, 784, 1047].forEach((f, i) => tone(f, 0, 0.14, 'square', 0.06, i * 0.11)),
+  select: () => tone(660, 0, 0.05),
+  pause: () => tone(880, 440, 0.1),
+  oneup: () => [660, 880, 1320].forEach((f, i) => tone(f, 0, 0.1, 'square', 0.06, i * 0.08)),
+};
+
+/* ---------- ステージ ---------- */
+function col(set, x, h, c = 'S') { for (let i = 1; i <= h; i++) set(x, 8 - i, c); }
+function row(set, x0, x1, y, c) { for (let x = x0; x <= x1; x++) set(x, y, c); }
+const STAGES = [
+  {
+    name: 'そよかぜの丘', w: 200, sky: ['#5ec8ff', '#c9f1ff'], hills: ['#a9e6b0', '#63c271'], cloud: '#ffffff',
+    gaps: [[48, 50], [92, 94], [140, 142]],
+    build(set) {
+      set(2, 7, '@');
+      set(10, 5, '?'); row(set, 14, 18, 5, 'B'); set(16, 5, 'P'); set(16, 2, '?');
+      set(21, 7, 'e');
+      col(set, 26, 2); col(set, 33, 3); col(set, 40, 3); set(29, 7, 'e');
+      row(set, 46, 52, 5, 'c');
+      row(set, 56, 60, 5, 'B'); set(58, 5, '?'); row(set, 56, 60, 3, 'c');
+      set(63, 7, 'e'); set(66, 7, 'e');
+      row(set, 70, 73, 4, 'B'); set(71, 3, 'e');
+      set(77, 5, '?'); set(80, 5, '?'); set(83, 5, '?'); set(80, 2, 'c');
+      set(87, 7, 'e');
+      row(set, 91, 95, 4, 'c');
+      set(100, 7, 'C');
+      row(set, 105, 111, 5, 'B'); set(108, 5, 'P'); set(106, 5, '?'); set(110, 5, '?');
+      set(113, 7, 'e'); set(115, 7, 'e'); set(117, 7, 'e');
+      row(set, 119, 124, 6, 'c');
+      col(set, 127, 2); col(set, 133, 3); set(130, 7, 'e');
+      row(set, 139, 143, 5, 'c');
+      set(148, 4, 'f');
+      row(set, 152, 156, 5, 'B'); set(154, 5, '?'); row(set, 152, 156, 3, 'c');
+      set(158, 7, 'e'); set(161, 7, 'e'); set(164, 4, 'f');
+      for (let i = 0; i < 6; i++) col(set, 168 + i, i + 1);
+      col(set, 174, 6);
+      for (let i = 0; i < 4; i++) col(set, 176 + i, 4 - i);
+      set(187, 7, 'G');
+    },
+  },
+  {
+    name: 'ゆうやけの谷', w: 210, sky: ['#ff8a5c', '#ffd9a0'], hills: ['#d79bc4', '#9a62ad'], cloud: '#ffe6d6',
+    gaps: [[20, 23], [44, 48], [70, 74], [96, 99], [122, 127], [150, 154]],
+    build(set) {
+      set(2, 7, '@');
+      set(8, 5, '?'); set(11, 5, 'B'); set(12, 5, 'P'); set(13, 5, 'B');
+      set(16, 7, 'e');
+      row(set, 19, 24, 5, 'c');
+      set(28, 7, '^'); set(29, 7, '^');
+      set(33, 7, 'e'); set(36, 4, 'f');
+      row(set, 38, 41, 5, 'B'); set(39, 5, '?');
+      row(set, 45, 47, 6, 'S'); row(set, 45, 47, 4, 'c');
+      set(52, 7, 'e'); set(54, 7, 'e');
+      col(set, 58, 2); set(58, 5, 'c');
+      set(61, 7, '^'); set(62, 7, '^'); set(63, 7, '^'); row(set, 60, 64, 3, 'c');
+      set(66, 4, 'f');
+      row(set, 71, 73, 5, 'B'); set(72, 5, '?');
+      row(set, 76, 80, 5, 'c');
+      set(79, 7, 'e'); set(82, 7, 'e'); set(84, 7, 'e');
+      col(set, 88, 3); col(set, 92, 2); set(90, 7, 'e');
+      set(97, 5, 'f');
+      set(104, 7, 'C');
+      row(set, 108, 113, 4, 'B'); set(110, 4, '?'); set(111, 4, 'P'); row(set, 108, 113, 2, 'c');
+      set(112, 7, 'e'); set(115, 7, 'e');
+      set(118, 7, '^'); set(119, 7, '^');
+      row(set, 124, 125, 6, 'S');
+      set(130, 4, 'f'); set(134, 7, 'e');
+      set(137, 7, '^'); set(138, 7, '^');
+      row(set, 141, 145, 5, 'B'); set(143, 5, '?'); set(144, 4, 'e');
+      set(147, 7, 'e');
+      set(152, 5, 'S'); set(152, 4, 'c');
+      set(158, 4, 'f'); set(162, 5, 'f');
+      row(set, 160, 166, 6, 'c');
+      set(168, 7, 'e'); set(170, 7, 'e');
+      for (let i = 0; i < 7; i++) col(set, 175 + i, i + 1);
+      col(set, 182, 7);
+      set(194, 7, 'G');
+    },
+  },
+];
+function buildGrid(def) {
+  const g = [];
+  for (let y = 0; y < ROWS; y++) g.push(new Array(def.w).fill('.'));
+  const set = (x, y, c) => { if (x >= 0 && x < def.w && y >= 0 && y < ROWS) g[y][x] = c; };
+  for (let x = 0; x < def.w; x++) if (!def.gaps.some(([a, b]) => x >= a && x <= b)) { set(x, 8, '#'); set(x, 9, '#'); }
+  def.build(set);
+  return g;
+}
+
+/* ---------- ゲーム状態 ---------- */
+const G = { screen: 'title', stageIdx: 0, lives: 3, score: 0, coins: 0, time: 300, frame: 0, cp: false, introT: 0 };
+let S = null, P = null;
+const SOLID = '#BS?PU';
+function tileAt(tx, ty) {
+  if (ty < 0 || ty >= ROWS) return '.';
+  if (tx < 0 || tx >= S.W) return '#';
+  return S.grid[ty][tx];
+}
+const isSolid = c => SOLID.includes(c);
+
+function loadStage(i, fromCP, keepPower) {
+  const def = STAGES[i];
+  const grid = buildGrid(def);
+  S = { def, grid, W: def.w, enemies: [], items: [], parts: [], pops: [], bumps: [], cam: 0,
+        goal: null, cp: null, start: { x: 2, y: 7 }, flagY: 24, timeTick: 0, combo: 0, mode: 'play', dieT: 0, goalT: 0 };
+  for (let y = 0; y < ROWS; y++) for (let x = 0; x < def.w; x++) {
+    const c = grid[y][x];
+    if (c === 'e') S.enemies.push({ type: 'walk', x: x * T + 2, y: y * T + 4, w: 12, h: 12, vx: 0, vy: 0, dir: -1, active: false, dead: false });
+    else if (c === 'f') S.enemies.push({ type: 'fly', x: x * T + 2, y: y * T + 2, w: 12, h: 12, vx: -0.35, vy: 0, baseY: y * T + 2, t: 0, active: false, dead: false });
+    else if (c === '@') S.start = { x, y };
+    else if (c === 'C') S.cp = { x, on: false };
+    else if (c === 'G') S.goal = { x };
+    else continue;
+    grid[y][x] = '.';
+  }
+  const sp = (fromCP && S.cp) ? { x: S.cp.x, y: 7 } : S.start;
+  if (fromCP && S.cp) S.cp.on = true;
+  P = { x: sp.x * T + 3, y: sp.y * T + 2, w: 10, h: 14, vx: 0, vy: 0, onGround: false, face: 1,
+        power: !!keepPower, inv: 0, coy: 0, buf: 0, anim: 0, hidden: false };
+  G.time = 300;
+  updateCam(true);
+}
+
+function moveEnt(e) {
+  const res = { hitX: false, head: null };
+  e.x += e.vx;
+  let top = Math.floor(e.y / T), bot = Math.floor((e.y + e.h - 1) / T);
+  if (e.vx > 0) {
+    const tx = Math.floor((e.x + e.w - 1) / T);
+    for (let ty = top; ty <= bot; ty++) if (isSolid(tileAt(tx, ty))) { e.x = tx * T - e.w; e.vx = 0; res.hitX = true; break; }
+  } else if (e.vx < 0) {
+    const tx = Math.floor(e.x / T);
+    for (let ty = top; ty <= bot; ty++) if (isSolid(tileAt(tx, ty))) { e.x = (tx + 1) * T; e.vx = 0; res.hitX = true; break; }
+  }
+  e.y += e.vy;
+  e.onGround = false;
+  const l = Math.floor(e.x / T), r = Math.floor((e.x + e.w - 1) / T);
+  if (e.vy > 0) {
+    const ty = Math.floor((e.y + e.h - 1) / T);
+    for (let tx = l; tx <= r; tx++) if (isSolid(tileAt(tx, ty))) { e.y = ty * T - e.h; e.vy = 0; e.onGround = true; break; }
+  } else if (e.vy < 0) {
+    const ty = Math.floor(e.y / T);
+    let hit = -1;
+    const mid = Math.floor((e.x + e.w / 2) / T);
+    if (isSolid(tileAt(mid, ty))) hit = mid;
+    else for (let tx = l; tx <= r; tx++) if (isSolid(tileAt(tx, ty))) { hit = tx; break; }
+    if (hit >= 0) { e.y = (ty + 1) * T; e.vy = 0; res.head = { tx: hit, ty }; }
+  }
+  return res;
+}
+const overlap = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+
+function addScore(n, x, y) { G.score += n; if (x !== undefined) S.pops.push({ x, y, text: String(n), life: 40 }); }
+function addCoin() {
+  G.coins++; SFX.coin();
+  if (G.coins >= 100) { G.coins -= 100; G.lives++; SFX.oneup(); S.pops.push({ x: P.x, y: P.y - 8, text: '1UP', life: 50 }); }
+}
+
+function hitBlock(tx, ty) {
+  const c = S.grid[ty][tx];
+  let bumped = true;
+  if (c === '?') {
+    S.grid[ty][tx] = 'U'; addCoin(); addScore(100);
+    S.parts.push({ type: 'coin', x: tx * T + 4, y: ty * T - 8, vx: 0, vy: -4, life: 26 });
+  } else if (c === 'P') {
+    S.grid[ty][tx] = 'U'; SFX.sprout();
+    S.items.push({ x: tx * T + 2, y: ty * T + 2, w: 12, h: 12, vx: 0, vy: 0, dir: 1, rise: 16 });
+  } else if (c === 'B') {
+    if (P.power) {
+      S.grid[ty][tx] = '.'; SFX.brk(); addScore(50); bumped = false;
+      for (const [dx, dy, vx, vy] of [[2, 2, -1.2, -4], [10, 2, 1.2, -4], [2, 10, -1, -2.5], [10, 10, 1, -2.5]])
+        S.parts.push({ type: 'debris', x: tx * T + dx, y: ty * T + dy, vx, vy, life: 60 });
+    } else SFX.bump();
+  } else { SFX.bump(); bumped = false; }
+  const zone = { x: tx * T, y: ty * T - 6, w: T, h: 6 };
+  if (bumped || !isSolid(S.grid[ty][tx])) {
+    S.bumps.push({ tx, ty, t: 10 });
+    for (const e of S.enemies) if (!e.dead && e.active && overlap(e, zone)) { killEnemy(e, true); addScore(200, e.x, e.y); }
+  }
+  if (tileAt(tx, ty - 1) === 'c') { S.grid[ty - 1][tx] = '.'; addCoin(); addScore(100); S.parts.push({ type: 'coin', x: tx * T + 4, y: (ty - 1) * T, vx: 0, vy: -4, life: 26 }); }
+}
+
+function killEnemy(e, flip) {
+  e.dead = true; e.deadT = flip ? 90 : 30; e.flip = flip || e.type === 'fly';
+  if (e.flip) { e.vy = -3; e.vx = 0; }
+}
+function hurtPlayer() {
+  if (P.inv > 0 || S.mode !== 'play') return;
+  if (P.power) { P.power = false; P.inv = 120; SFX.hurt(); }
+  else killPlayer();
+}
+function killPlayer() {
+  S.mode = 'dying'; S.dieT = 150; P.vx = 0; P.vy = -5; P.power = false; SFX.die();
+}
+function startGoal() {
+  S.mode = 'goal'; S.goalT = 0;
+  const h = 128 - (P.y + P.h);
+  const bonus = h >= 96 ? 5000 : h >= 64 ? 2000 : h >= 32 ? 800 : 400;
+  addScore(bonus, S.goal.x * T + 10, P.y);
+  P.x = S.goal.x * T + 7 - P.w; P.vx = 0; P.vy = 0; P.face = 1;
+  SFX.goal();
+}
+
+function updatePlayer() {
+  const dash = held.dash;
+  const maxv = dash ? 2.8 : 1.6;
+  const acc = P.onGround ? (dash ? 0.11 : 0.08) : 0.07;
+  if (held.left && !held.right) { P.vx -= acc * (P.vx > 0 ? 2.5 : 1); P.face = -1; }
+  else if (held.right && !held.left) { P.vx += acc * (P.vx < 0 ? 2.5 : 1); P.face = 1; }
+  else { P.vx *= P.onGround ? 0.82 : 0.96; if (Math.abs(P.vx) < 0.05) P.vx = 0; }
+  if (Math.abs(P.vx) > maxv) P.vx = Math.sign(P.vx) * Math.max(maxv, Math.abs(P.vx) - 0.08);
+  P.coy = P.onGround ? 6 : P.coy - 1;
+  P.buf = pressed.jump ? 7 : P.buf - 1;
+  if (P.buf > 0 && P.coy > 0) {
+    P.vy = -(5.4 + Math.abs(P.vx) * 0.3); P.buf = 0; P.coy = 0; P.onGround = false; SFX.jump();
+  }
+  if (!held.jump && P.vy < -2) P.vy = -2;
+  P.vy += (held.jump && P.vy < 0) ? 0.24 : 0.42;
+  if (P.vy > 7) P.vy = 7;
+  const r = moveEnt(P);
+  if (r.head) hitBlock(r.head.tx, r.head.ty);
+  if (P.onGround) S.combo = 0;
+  P.anim += Math.abs(P.vx) * 0.12;
+  if (P.inv > 0) P.inv--;
+  if (P.y > VH + 16) { killPlayer(); return; }
+
+  const l = Math.floor(P.x / T), rr = Math.floor((P.x + P.w - 1) / T);
+  const t0 = Math.floor(P.y / T), t1 = Math.floor((P.y + P.h - 1) / T);
+  for (let ty = t0; ty <= t1; ty++) for (let tx = l; tx <= rr; tx++) {
+    const c = tileAt(tx, ty);
+    if (c === 'c') { S.grid[ty][tx] = '.'; addCoin(); addScore(100); }
+    else if (c === '^' && overlap(P, { x: tx * T + 2, y: ty * T + 9, w: 12, h: 7 })) hurtPlayer();
+  }
+  if (S.cp && !S.cp.on && P.x > S.cp.x * T) { S.cp.on = true; G.cp = true; SFX.select(); }
+  if (S.goal && P.x + P.w > S.goal.x * T + 6) startGoal();
+}
+
+function updateEnemies() {
+  for (const e of S.enemies) {
+    if (!e.active) { if (e.x < S.cam + VW + 24) e.active = true; else continue; }
+    if (e.dead) {
+      e.deadT--;
+      if (e.flip) { e.vy += 0.3; e.y += e.vy; }
+      continue;
+    }
+    if (e.type === 'walk') {
+      e.vx = e.dir * 0.5; e.vy = Math.min(e.vy + 0.4, 6);
+      const r = moveEnt(e);
+      if (r.hitX) e.dir *= -1;
+      e.t = (e.t || 0) + 1;
+      if (e.y > VH + 32) { e.dead = true; e.deadT = 0; }
+    } else {
+      e.t++; e.x += e.vx; e.y = e.baseY + Math.sin(e.t * 0.05) * 22;
+    }
+    if (S.mode === 'play' && overlap(P, e)) {
+      if (P.vy > 0 && (P.y + P.h) - e.y < 9) {
+        killEnemy(e, false); S.combo++;
+        const pts = [100, 200, 400, 800, 1000][Math.min(S.combo - 1, 4)];
+        addScore(pts, e.x, e.y - 4); SFX.stomp();
+        P.vy = held.jump ? -5.6 : -3.6;
+      } else hurtPlayer();
+    }
+  }
+  S.enemies = S.enemies.filter(e => !(e.dead && e.deadT <= 0) && e.x > S.cam - 160);
+}
+
+function updateItems() {
+  for (const it of S.items) {
+    if (it.rise > 0) { it.y -= 1; it.rise--; continue; }
+    it.vx = it.dir * 0.9; it.vy = Math.min(it.vy + 0.4, 6);
+    const r = moveEnt(it);
+    if (r.hitX) it.dir *= -1;
+    if (S.mode === 'play' && overlap(P, it)) { it.got = true; P.power = true; addScore(1000, it.x, it.y); SFX.power(); }
+    if (it.y > VH + 32) it.got = true;
+  }
+  S.items = S.items.filter(it => !it.got);
+}
+function updateParts() {
+  for (const p of S.parts) {
+    p.life--; p.x += p.vx; p.y += p.vy;
+    p.vy += p.type === 'coin' ? 0.3 : 0.25;
+    if (p.type === 'coin' && p.life === 0) S.pops.push({ x: p.x, y: p.y, text: '100', life: 30 });
+  }
+  S.parts = S.parts.filter(p => p.life > 0);
+  for (const p of S.pops) { p.life--; p.y -= 0.5; }
+  S.pops = S.pops.filter(p => p.life > 0);
+  for (const b of S.bumps) b.t--;
+  S.bumps = S.bumps.filter(b => b.t > 0);
+}
+function updateCam(snap) {
+  const target = P.x + P.w / 2 - VW * 0.42;
+  S.cam = Math.max(0, Math.min(target, S.W * T - VW));
+}
+
+function updatePlay() {
+  if (pressed.start && S.mode === 'play') { SFX.pause(); openScreen('pause'); return; }
+  if (S.mode === 'play') {
+    updatePlayer();
+    if (S.mode === 'play' && ++S.timeTick >= 30) {
+      S.timeTick = 0; G.time--;
+      if (G.time <= 0) { G.time = 0; killPlayer(); }
+    }
+  } else if (S.mode === 'dying') {
+    S.dieT--;
+    if (S.dieT < 130) { P.vy += 0.3; P.y += P.vy; }
+    if (S.dieT <= 0) {
+      G.lives--;
+      if (G.lives <= 0) { showOver(false); return; }
+      loadStage(G.stageIdx, G.cp, false); showIntro();
+      return;
+    }
+  } else if (S.mode === 'goal') {
+    S.goalT++;
+    const ground = 128 - P.h;
+    if (P.y < ground && S.goalT < 200) { P.y = Math.min(ground, P.y + 2); S.flagY = Math.min(112, S.flagY + 2); }
+    else if (S.goalT > 30) {
+      P.y = ground; P.onGround = true;
+      if (!P.hidden) { P.x += 1.1; P.anim += 0.15; P.vx = 1.1; }
+      if (P.x > S.goal.x * T + 72) { P.hidden = true; P.vx = 0; }
+      if (G.time > 0) { const d = Math.min(2, G.time); G.time -= d; G.score += d * 10; if (G.frame % 4 === 0) tone(1400, 0, 0.03, 'square', 0.03); }
+      else if (P.hidden && S.goalT > 220) { nextStage(); return; }
+    }
+  }
+  updateEnemies(); updateItems(); updateParts();
+  if (S.mode !== 'dying') updateCam(false);
+}
+function nextStage() {
+  const keep = P.power;
+  G.stageIdx++; G.cp = false;
+  if (G.stageIdx >= STAGES.length) { showOver(true); return; }
+  loadStage(G.stageIdx, false, keep); showIntro();
+}
+
+/* ---------- 画面（メニュー） ---------- */
+const OV = { title: $('ovTitle'), config: $('ovConfig'), pause: $('ovPause'), over: $('ovOver'), msg: $('ovMsg') };
+let menuSel = 0;
+function menuButtons() { const el = OV[G.screen]; return el ? [...el.querySelectorAll('.menu button')] : []; }
+function markSel() { menuButtons().forEach((b, i) => b.classList.toggle('sel', i === menuSel)); }
+function openScreen(name) {
+  G.screen = name;
+  for (const k in OV) OV[k].hidden = !(k === name || (name === 'intro' && k === 'msg'));
+  $('hud').hidden = !(name === 'play' || name === 'intro' || name === 'pause');
+  menuSel = 0; markSel();
+  if (name === 'config') renderConfig();
+  if (name === 'title' && P) P.hidden = true;
+}
+function showIntro() {
+  $('msgHead').textContent = 'ステージ ' + (G.stageIdx + 1) + '　' + STAGES[G.stageIdx].name;
+  $('msgSub').textContent = 'ポコ × ' + G.lives;
+  G.introT = 110; openScreen('intro');
+}
+function showOver(cleared) {
+  $('overHead').textContent = cleared ? 'ぜんぶクリア' : 'ゲームオーバー';
+  $('overScore').textContent = 'スコア ' + G.score;
+  if (cleared) SFX.oneup();
+  openScreen('over');
+}
+function newGame() {
+  G.stageIdx = 0; G.lives = 3; G.score = 0; G.coins = 0; G.cp = false;
+  loadStage(0, false, false); showIntro();
+}
+async function goFull() {
+  try {
+    const el = document.documentElement;
+    if (!document.fullscreenElement && el.requestFullscreen) await el.requestFullscreen();
+    if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape').catch(() => {});
+  } catch (e) {}
+}
+function activate(act) {
+  SFX.select();
+  switch (act) {
+    case 'start': case 'retry': newGame(); break;
+    case 'config': openScreen('config'); break;
+    case 'full': goFull(); break;
+    case 'resume': openScreen('play'); break;
+    case 'title': loadStage(0, false, false); openScreen('title'); break;
+    case 'capture': startCapture(); break;
+    case 'reset': BIND = clone(DEFAULT_BIND); saveBind(); renderConfig(); $('cfgPrompt').textContent = '初期設定に戻しました'; break;
+    case 'back': capture = null; openScreen('title'); break;
+  }
+}
+document.querySelectorAll('.menu button').forEach(b => b.addEventListener('click', e => { e.preventDefault(); unlockAudio(); activate(b.dataset.act); }));
+function menuUpdate() {
+  const btns = menuButtons(); if (!btns.length) return;
+  if (pressed.down) { menuSel = (menuSel + 1) % btns.length; markSel(); SFX.select(); }
+  if (pressed.up) { menuSel = (menuSel + btns.length - 1) % btns.length; markSel(); SFX.select(); }
+  if (pressed.jump || pressed.start) activate(btns[menuSel].dataset.act);
+}
+
+/* ---------- ボタン設定 ---------- */
+let capture = null;
+function renderConfig() {
+  const list = $('cfgList'); list.textContent = '';
+  for (const a of ACTIONS) {
+    const n = document.createElement('span'); n.textContent = ACTION_NAMES[a];
+    const v = document.createElement('span'); v.textContent = BIND[a].slice(0, 3).map(fmtId).join(' / ') || '（なし）';
+    list.append(n, v);
+  }
+  if (!capture) $('cfgPrompt').textContent = '';
+}
+function startCapture() {
+  const pad = getPad();
+  capture = { i: 0, wait: true, base: pad ? pad.axes.slice() : [] };
+  showCapturePrompt();
+}
+function showCapturePrompt() {
+  $('cfgPrompt').textContent = '「' + ACTION_NAMES[ACTIONS[capture.i]] + '」にするボタンを押してください（' + (capture.i + 1) + '/' + ACTIONS.length + '）';
+}
+function configUpdate() {
+  if (!capture) { menuUpdate(); return; }
+  const raw = rawActive(curPad, capture.base);
+  if (capture.wait) { if (raw.size === 0) capture.wait = false; return; }
+  if (!raw.size) return;
+  const id = [...raw][0];
+  for (const a of ACTIONS) BIND[a] = BIND[a].filter(x => x !== id);
+  BIND[ACTIONS[capture.i]] = [id];
+  SFX.select();
+  capture.i++; capture.wait = true;
+  renderConfig();
+  if (capture.i >= ACTIONS.length) {
+    capture = null; saveBind(); renderConfig();
+    $('cfgPrompt').textContent = '設定しました';
+    for (const a of ACTIONS) held[a] = true;
+  } else showCapturePrompt();
+}
+
+/* ---------- 描画 ---------- */
+function hash(n) { const s = Math.sin(n * 127.1) * 43758.5453; return s - Math.floor(s); }
+function drawBG(cam) {
+  const def = S.def;
+  const gr = ctx.createLinearGradient(0, 0, 0, VH);
+  gr.addColorStop(0, def.sky[0]); gr.addColorStop(1, def.sky[1]);
+  ctx.fillStyle = gr; ctx.fillRect(0, 0, VW, VH);
+  const cp = cam * 0.2;
+  ctx.fillStyle = def.cloud;
+  for (let k = Math.floor(cp / 110) - 1; k <= Math.floor((cp + VW) / 110) + 1; k++) {
+    const x = Math.round(k * 110 - cp + hash(k) * 40), y = Math.round(10 + hash(k * 7 + 3) * 36);
+    ctx.fillRect(x, y + 4, 30, 8); ctx.fillRect(x + 5, y, 12, 6); ctx.fillRect(x + 15, y + 1, 10, 5);
+  }
+  [[def.hills[0], 0.3, 14, 96, 1], [def.hills[1], 0.55, 10, 112, 4]].forEach(([c, par, amp, base, seed]) => {
+    ctx.fillStyle = c;
+    for (let x = 0; x < VW; x += 2) {
+      const wx = x + cam * par;
+      const h = Math.round(base - (Math.sin(wx * 0.012 + seed) * amp + Math.sin(wx * 0.031 + seed * 2) * amp * 0.5));
+      ctx.fillRect(x, h, 2, VH - h);
+    }
+  });
+}
+function drawWorld() {
+  const cam = Math.round(S.cam);
+  drawBG(cam);
+  const c0 = Math.floor(cam / T), c1 = c0 + Math.ceil(VW / T) + 1;
+  const qf = Math.floor(G.frame / 10) % 4;
+  for (let ty = 0; ty < ROWS; ty++) for (let tx = c0; tx <= c1 && tx < S.W; tx++) {
+    const c = S.grid[ty][tx]; if (c === '.') continue;
+    let x = tx * T - cam, y = ty * T;
+    const b = S.bumps.find(b => b.tx === tx && b.ty === ty);
+    if (b) y -= Math.round(Math.sin((10 - b.t) / 10 * Math.PI) * 4);
+    switch (c) {
+      case '#': ctx.drawImage(tileAt(tx, ty - 1) === '#' ? TL.dirt : TL.grass, x, y); break;
+      case 'B': ctx.drawImage(TL.brick, x, y); break;
+      case '?': case 'P': ctx.drawImage(TL.q[qf], x, y); break;
+      case 'U': ctx.drawImage(TL.used, x, y); break;
+      case 'S': ctx.drawImage(TL.stone, x, y); break;
+      case '^': ctx.drawImage(TL.spike, x, y); break;
+      case 'c': drawCoin(x + 8, y + 8, G.frame / 8 + tx); break;
+    }
+  }
+  if (S.cp) {
+    const x = S.cp.x * T - cam + 7;
+    ctx.fillStyle = '#5a3c22'; ctx.fillRect(x, 104, 2, 24);
+    ctx.fillStyle = S.cp.on ? '#ff8a3c' : '#9aa0b5'; ctx.fillRect(x + 2, 104, 9, 6);
+  }
+  if (S.goal) {
+    const x = S.goal.x * T - cam + 7;
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(x, 20, 2, 108);
+    ctx.fillStyle = '#ffd23f'; ctx.fillRect(x - 2, 14, 6, 6);
+    ctx.fillStyle = '#ff5a7a';
+    for (let i = 0; i < 12; i++) ctx.fillRect(x - 2 - i, S.flagY + Math.floor(i / 2), 1, 12 - i);
+    ctx.fillStyle = '#2b1d2e'; ctx.fillRect(x + 64, 96, 40, 32);
+    ctx.fillStyle = '#c65a3a'; ctx.fillRect(x + 66, 98, 36, 30);
+    ctx.fillStyle = '#7a2c1c'; for (let i = 0; i < 10; i++) ctx.fillRect(x + 60 + i * 2, 96 - i * 2, 48 - i * 4, 2);
+    ctx.fillStyle = '#2b1d2e'; ctx.fillRect(x + 78, 110, 12, 18);
+  }
+  for (const it of S.items) ctx.drawImage(SPR_BERRY, Math.round(it.x - 2 - cam), Math.round(it.y - 4));
+  for (const e of S.enemies) {
+    if (!e.active) continue;
+    const x = Math.round(e.x - 2 - cam), y = Math.round(e.y - 4);
+    if (e.type === 'walk') {
+      const spr = SPR_BUG[Math.floor((e.t || 0) / 10) % 2];
+      if (e.dead && !e.flip) ctx.drawImage(spr, 0, 0, 16, 16, x, y + 10, 16, 6);
+      else if (e.flip) { ctx.save(); ctx.translate(x, y + 16); ctx.scale(1, -1); ctx.drawImage(spr, 0, 0); ctx.restore(); }
+      else ctx.drawImage(spr, x, y);
+    } else {
+      const spr = SPR_BAT[Math.floor(e.t / 8) % 2];
+      if (e.flip) { ctx.save(); ctx.translate(x, y + 16); ctx.scale(1, -1); ctx.drawImage(spr, 0, 0); ctx.restore(); }
+      else ctx.drawImage(spr, x, y);
+    }
+  }
+  drawPlayer(cam);
+  for (const p of S.parts) {
+    if (p.type === 'coin') drawCoin(Math.round(p.x - cam + 4), Math.round(p.y + 4), G.frame / 3);
+    else { ctx.fillStyle = '#7a2c1c'; ctx.fillRect(Math.round(p.x - cam), Math.round(p.y), 5, 5); ctx.fillStyle = '#c65a3a'; ctx.fillRect(Math.round(p.x - cam), Math.round(p.y), 4, 4); }
+  }
+  ctx.font = '8px DotGothic16, monospace'; ctx.textAlign = 'center';
+  for (const p of S.pops) {
+    const x = Math.round(p.x - cam + 6), y = Math.round(p.y);
+    ctx.fillStyle = '#2b1d2e'; ctx.fillText(p.text, x + 1, y + 1);
+    ctx.fillStyle = '#ffffff'; ctx.fillText(p.text, x, y);
+  }
+}
+function drawCoin(cx, cy, ph) {
+  const w = [8, 6, 2, 6][Math.floor(ph) % 4];
+  ctx.fillStyle = '#a86b00'; ctx.fillRect(cx - w / 2 - 1, cy - 6, w + 2, 12);
+  ctx.fillStyle = '#ffd23f'; ctx.fillRect(cx - w / 2, cy - 5, w, 10);
+  if (w > 2) { ctx.fillStyle = '#fff4b0'; ctx.fillRect(cx - w / 2 + 1, cy - 4, 1, 6); }
+}
+function drawPlayer(cam) {
+  if (!P || P.hidden) return;
+  if (P.inv > 0 && Math.floor(P.inv / 3) % 2 === 0) return;
+  const set = P.power ? SPR_P.p : SPR_P.n;
+  let fr;
+  if (S.mode === 'dying' || !P.onGround) fr = set.jump;
+  else if (Math.abs(P.vx) > 0.2) fr = Math.floor(P.anim) % 2 ? set.walk1 : set.walk2;
+  else fr = set.stand;
+  ctx.drawImage(fr[P.face > 0 ? 0 : 1], Math.round(P.x - 3 - cam), Math.round(P.y - 2));
+}
+
+/* ---------- HUD ---------- */
+const hudCache = {};
+function setHud(id, v) { if (hudCache[id] !== v) { hudCache[id] = v; $(id).textContent = v; } }
+let padCache = '';
+function updateHud() {
+  setHud('hLives', String(G.lives));
+  setHud('hScore', String(G.score).padStart(6, '0'));
+  setHud('hCoins', String(G.coins).padStart(2, '0'));
+  setHud('hStage', String(G.stageIdx + 1));
+  setHud('hTime', String(G.time));
+  const ps = padStatusText();
+  if (ps !== padCache) { padCache = ps; document.querySelectorAll('.padStatus').forEach(e => e.textContent = ps); }
+  if (G.screen === 'config') {
+    const live = [...rawNow].map(fmtId).join(' / ') || 'なし';
+    setHud('cfgLive', live);
+  }
+}
+
+/* ---------- ループ ---------- */
+function step() {
+  pollInput();
+  G.frame++;
+  switch (G.screen) {
+    case 'play': updatePlay(); break;
+    case 'intro': if (--G.introT <= 0) openScreen('play'); break;
+    case 'config': configUpdate(); break;
+    case 'title': S.cam = (S.cam + 0.3) % (S.W * T - VW); menuUpdate(); break;
+    default: menuUpdate();
+  }
+  updateHud();
+}
+let last = performance.now(), acc = 0;
+const DT = 1000 / 60;
+function loop(now) {
+  acc += Math.min(100, now - last); last = now;
+  while (acc >= DT) { step(); acc -= DT; }
+  drawWorld();
+  requestAnimationFrame(loop);
+}
+window.addEventListener('gamepadconnected', () => getPad());
+
+resize();
+loadStage(0, false, false);
+openScreen('title');
+requestAnimationFrame(loop);
+})();
+</script>
